@@ -1,0 +1,86 @@
+export const title = 'Configuring a setup';
+
+
+# Configuring a setup
+
+
+## Introduction
+
+We can define a configuration for the `mf.valves` units by listing its devices.
+
+```yml
+# ...
+units:
+  # ...
+  mf.valves:
+    devices:
+      - driver: numato
+        port: /dev/tty.usbmodem1101
+```
+
+Here, we defined a device on port `/dev/tty.usbmodem1101` with the Numato driver to control a [Numato relay module](https://numato.com/product/16-channel-usb-relay-module/). We can now define a number of valves available on that setup, and their corresponding relay number (aka channel).
+
+```yml
+devices:
+  - driver: numato
+    port: /dev/tty.usbmodem1101
+    valves:
+      - name: A1
+        channel: 0
+      - name: A2
+        channel: 1
+      - name: A3
+        channel: 2
+      - name: A4
+        channel: 3
+      - name: B1
+        channel: 4
+      - name: B2
+        channel: 5
+```
+
+Other devices can be added to the configuration by appending to the `devices` list. As an example, we could have a device on the local network being remotely controlled.
+
+```yml
+devices:
+  - driver: numato
+    port: /dev/tty.usbmodem1101
+    valves:
+      # ...
+  - driver: some_remote_driver
+    address: 192.168.1.32
+    valves:
+      # ...
+```
+
+
+## Built-in drivers
+
+- `numato` – Driver to control [Numato](https://numato.com/) relay modules, based on the RS-232 protocol and powered by [pySerial](https://github.com/pyserial/pyserial). Requires the following keys:
+  - `port` – The serial port to use. Usually something like `/dev/tty.usbmodem1101` on *nix and `COM1` on Windows.
+- `mock` – Driver to mock a device, useful for testing.
+
+
+## Creating a driver
+
+If you are using a device other than those with built-in drivers, you can create your own using a Python script. The `signal` value is a single integer which contains the status of every valve: bit 0 represents channel 0, bit 1 channel 1, etc.
+
+```python
+class Driver:
+  # Define a set of keys that are allowed for the driver's configuration.
+  keys = {}
+
+  def from_spec(spec):
+    # The driver's configuration will be contained in the 'spec' dictionary.
+    # It is recommended to validate the configuration before using it.
+
+    # Create a new driver instance.
+    return Driver(...)
+
+
+  def read(self):
+    return get_signal_somehow()
+
+  def write(self, signal):
+    set_signal_somehow(signal)
+```
