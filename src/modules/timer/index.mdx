@@ -1,0 +1,21 @@
+export const title = 'Timer';
+
+
+# Timer
+
+Version: 1.0
+
+The timer module provides a simple timer. It features a single `duration` attribute which takes a duration as argument and generates a corresponding process. The process can be paused, resumed and skipped.
+
+```yml
+actions:
+  - duration: 300 ms
+  - duration: 1 hr 5 min
+```
+
+The resolution and latency of the timer depend on the Python implementation and platform, as well as the behavior of other modules running in parallel. In practice, the timer will be accurate to within a few milliseconds but this is not guaranteed. Furthermore, it possible that the timer finish before the provided duration if that difference is within the system clock resolution.
+
+
+## Relevant RFCs
+
+See RFCs 71 & 140 for upcoming revisions.

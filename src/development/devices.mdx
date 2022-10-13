@@ -1,0 +1,92 @@
+export const title = 'Devices';
+
+
+# Standardized devices
+
+
+## Introduction
+
+PR–1 provides a mechanism to manage devices and make it possible for units to build upon each other. For instance, in the case of a USB device, three units could work together:
+
+1. a low-level unit communicates to the USB driver and provides a low-level interface in the form of binary I/O;
+2. a mid-level unit elevates the low-level interface to a higher level in the form of high-level commands;
+3. a high-level unit provides tools to simplify working with this interface, for example by grouping such commands.
+
+In this context, a device is not necessarily a physical device connected to the computer. It could also be a remotely controlled device, or just a virtual object which is convenient to consider a device.
+
+
+## Recipes
+
+### Creating a device
+
+A device is referenced by its identifier which must be unique among all devices and units. A minimal device implementation only needs to implement the identifier as the `self.id` attribute to be valid.
+
+```py
+class TempSensor:
+  def __init__(self):
+    self.id = 'temp_sensor1'
+
+sensor = TempSensor()
+host.devices[sensor.id] = sensor
+```
+
+The device is registered on the `host.devices` dictionary using its identifier. In a more realistic example, the id `temp_sensor1` would provided by the user as part of setup's configuration.
+
+Unfortunately, in this example, the device won't be usuable by other units as it does not use a common interface. Instead, it can be made to inherit `NodeDevice` and provide a standard interface in the `self.nodes` attribute.
+
+```py
+from pr1.device import NodeDevice
+
+class TempSensor(NodeDevice):
+  def __init__(self):
+    self.id = 'temp_sensor1'
+    self.nodes = [NumericNode(type='f32')]
+
+    def update_callback(value):
+      self.nodes[0].value = value
+
+    start_sensor_somethow(update_callback)
+```
+
+### Reading from a device
+
+A consumer unit can use the device using the same `host.devices` dictionary used to create devices.
+
+```py
+sensor = host.devices['temp_sensor1']
+
+# Get the last known value.
+sensor.nodes[0].value
+
+# Fetch the current value.
+await sensor.nodes[0].read()
+```
+
+Listening to the device's nodes is done by calling `node.listen()`. Certain devices have optimization for listening to changes but others device will just poll the value repeatedly.
+
+```py
+node = sensor.nodes[0]
+print("Initial value", node.value)
+
+while True:
+  value = await node.listen()
+  print("New value", value)
+```
+
+### Batch-reading from a device
+
+Multiple nodes can be read from the same device in a single call. Certain devices have optimization for batch-reading but others device will just read requested values individually.
+
+```py
+# These are identical
+values = await sensor.read(0b011001)
+values = await sensor.read([0, 3, 4])
+values = await sensor.read([sensor.nodes[0], sensor.nodes[3], sensor.nodes[4]])
+```
+
+The same is possible for listening to values.
+
+```py
+values = await sensor.listen(0b011001)
+# etc.
+```

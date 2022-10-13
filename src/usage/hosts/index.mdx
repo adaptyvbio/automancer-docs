@@ -1,0 +1,72 @@
+export const title = 'Setups';
+
+
+# Setups
+
+A _setup_, internally known as a _host_, is an object which defines a physical setup.
+
+
+## Configuration
+
+Every setup has a configuration which specifies which Python binary to use, which in turns provides a list of modules to be loaded. For most applications, the default user Python implementation is sufficient as long as its version is 3.10 or later. This setting is handled by the application running the setup, usually the user interface.
+
+The following root attributes are available:
+
+- `id` (identifier, required) – A unique id associated to this setup. Automatically generated.
+- `name` (string, required) – The name of the setup. Automatically generated with the computer's name.
+- `units` (dictionary) – A dictionary listing the configuration of every module. See [Module](#) for details.
+- `version` (string, required) – The version of the configuration's schema, for backwards compatibility. Automatically generated and updated.
+
+
+## Modules
+
+The configuration of modules is provided in the setup configuration file as key-value pairs where the key is the module's namespace.
+
+```yml
+units:
+  ksp:
+    # <- Options regarding the module initialization here
+    options:
+      # <- Options passed to the module here
+```
+
+The following options for module initialization are available:
+
+- `development` (boolean) – Whether to load the module in [development mode](#). Defaults to false.
+- `enabled` (boolean) – Whether the module is enabled. Defaults to true.
+- `module` (string) – The module's name (e.g. `a.b.c`) indicating where to find the module if it is [not registered as an entry point](#) but present in `sys.path`. This is for development only. If `path` is also present, `module` will only be used to name the module but not to locate it.
+- `options` (object) – Options passed to the module. Defaults to an empty dictionary.
+- `path` (string) – The module's path (e.g. `/path/to/a/b/c.py`) indicating where to find the module if it is not registered as an entry point and not present in `sys.path`. This is for development only.
+
+By default, all modules installed in `sys.path` are loaded and enabled even if they are not mentioned in the configuration.
+
+
+## Devices
+
+Several modules interact with external devices and follow a similar pattern when defining the configuration of these devices. This configuration starts with a `devices` attribute in the module options, which defines a list of devices. Each device can the following properties:
+
+- `id` (identifier, required) – A string unique to this device among all devices in the setup. This id will be used to reference the device in protocols.
+- `label` (string) – The name of the device. Defaults to a name provided by the device itself, the name of its manufacturer, the device's model, its serial number, its `id`, or a similar string.
+- `model` (string, sometimes required) – The model of the device. This can sometimes be detected automatically by communicating with the device or using information from the underlying protocol, such as the product id in the case of USB.
+- One or more options to locate the device, such as:
+  - `address` (number or string) – The address of the device, such as an IP address and port (e.g. `17.244.221.152:6513`), a full address with credentials (e.g. `user:pass@server.net`), a serial port (e.g. `COM3` or `/dev/tty.usbmodem1101`) or a USB bus address (e.g. `5`).
+  - `serial` (string) – The serial number of the device, as defined by the manufacturer.
+- Other options depending on the module and `model`.
+```yml
+units:
+  ksp:
+    options:
+      devices:
+        - id: RA1
+          label: Rocket alpha 1
+          model: alpha
+          address: LaunchingPads.1
+          # <- Other options here
+        - id: RA2
+          # ...
+```
+
+
+## Relevant RFCs
+
+See RFC 55
