@@ -108,6 +108,7 @@ for (let entry of entries) {
     contents: elementText,
     navigation,
     sectionEntry: (ancestors[0] ?? null),
+    stylesPath: '../'.repeat(ancestors.length) + 'styles.css',
     title: entry.title ?? 'Untitled'
   });
 

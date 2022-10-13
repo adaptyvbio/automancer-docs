@@ -2,7 +2,7 @@
   "type": "module",
   "scripts": {
     "build": "npm run build:css && npm run build:pages",
-    "build:css": "sass styles/index.scss:dist/styles.css",
+    "build:css": "sass styles/index.scss:dist/styles.css --no-source-map",
     "build:pages": "node build.js"
   },
   "devDependencies": {
@@ -12,6 +12,7 @@
     "mustache": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "sass": "^1.55.0",
     "tiny-glob": "^0.2.9"
   }
 }
