@@ -1,4 +1,5 @@
 import mdx from '@mdx-js/esbuild';
+import minimist from 'minimist';
 import Mustache from 'mustache';
 import esbuild from 'esbuild';
 import * as fs from 'fs/promises';
@@ -8,6 +9,11 @@ import { jsx } from 'react/jsx-runtime';
 import glob from 'tiny-glob';
 import { fileURLToPath } from 'url';
 
+
+const args = minimist(process.argv.slice(2));
+
+let siteUrl = args['site-url'] ?? '/';
+siteUrl = siteUrl.endsWith('/') ? siteUrl : siteUrl + '/';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const template = (await fs.readFile(__dirname + '/templates/index.html')).toString();
@@ -60,7 +66,7 @@ for (let absPath of procPaths) {
     imported,
     title: imported.title,
     outPath: [...addrSegments, 'index'].join('/') + '.html',
-    outUrl: '/' + addrSegments.join('/') + '/',
+    outUrl: siteUrl + addrSegments.join('/') + '/',
     segments: addrSegments,
     sourcePath: relPath
   };
@@ -108,7 +114,7 @@ for (let entry of entries) {
     contents: elementText,
     navigation,
     sectionEntry: (ancestors[0] ?? null),
-    stylesPath: '../'.repeat(ancestors.length) + 'styles.css',
+    stylesPath: siteUrl + 'styles.css',
     title: entry.title ?? 'Untitled'
   });
 
