@@ -1,0 +1,48 @@
+import { Brand } from '../shared';
+
+export const title = 'OPC-UA server';
+
+
+# OPC-UA server
+
+Version: 1.0
+
+
+## Introduction
+
+This module adds partial support for a server obeying the [OPC-UA protocol](https://opcfoundation.org/about/opc-technologies/opc-ua/) using [opcua-asyncio](https://github.com/FreeOpcUa/opcua-asyncio).
+
+
+## Device configuration
+
+This module follows the standard definition of devices.  In addition to the standard properties of a device, it requires the following.
+
+- `address` (string, required) – The address of the device, such as `opc.tcp://192.168.0.23:4840/a/b`.
+- `nodes` (required) – A list that maps physical (i.e. OPC-UA) nodes to virtual (i.e. <Brand />) nodes, with the following properties:
+  - `id` (identifier, required) – The id of the virtual node.
+  - `location` (string, required) – The location of the physical node, such as `ns=3;i=2` or `ns=3;s="Foo bar".S02`.
+  - `type` (string, required) – The type of the physical node, and thus of the virtual node. The following values are supported:
+    - `bool` – A boolean value.
+
+An example is shown below.
+
+```yml
+devices:
+  - id: PLC
+    address: opc.tcp://192.168.0.23:4840/a/b
+    nodes:
+      - id: S00
+        location: ns=3;i=2
+        type: bool
+      - id: S01
+        location: ns=3;i=3
+        type: bool
+      - id: S02
+        location: ns=3;i=4
+        type: bool
+```
+
+
+## Device nodes
+
+Each device generates a node for each entry in the `nodes` list, which can then be used by any node consumer.

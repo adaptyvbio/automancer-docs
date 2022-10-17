@@ -1,14 +1,35 @@
-export const title = 'Setups';
+export const title = 'Managing setups';
 
 
-# Setups
+# Managing setups
 
 A _setup_, internally known as a _host_, is an object which defines a physical setup.
 
 
-## Configuration
+## Adding a setup
 
-Every setup has a configuration which specifies which Python binary to use, which in turns provides a list of modules to be loaded. For most applications, the default user Python implementation is sufficient as long as its version is 3.10 or later. This setting is handled by the application running the setup, usually the user interface.
+Setups can be added by clicking **New setup** on the startup window.
+
+Every setup depends on a Python binary, which can be the system's installation or an embedded binary. All Python packages present in this installation's import path will be searched for modules.
+
+If an error occurs during launch, an alert modal will be displayed. If the setup is local, the error will be printed to a log file. Log files can be found from the startup menu: **Right click on a setup → Reveal logs in explorer**.
+
+
+## Installing modules
+
+Modules can be installed as any Python project, using `pip` or another package manager.
+
+```sh
+$ pip install pr1_ksp
+$ pip install path/to/module
+```
+
+Installed modules will be automatically loaded and enabled when the setup is launched. Note also that a project can contain multiple modules.
+
+
+## Configuring a setup
+
+When running a standalone application, the setup's configuration can be found from the startup menu: **Right click on a setup → Reveal settings in explorer → Open `setup.yml`**.
 
 The following root attributes are available:
 
@@ -18,7 +39,7 @@ The following root attributes are available:
 - `version` (string, required) – The version of the configuration's schema, for backwards compatibility. Automatically generated and updated.
 
 
-## Modules
+### Modules
 
 The configuration of modules is provided in the setup configuration file as key-value pairs where the key is the module's namespace.
 
@@ -36,12 +57,12 @@ The following options for module initialization are available:
 - `enabled` (boolean) – Whether the module is enabled. Defaults to true.
 - `module` (string) – The module's name (e.g. `a.b.c`) indicating where to find the module if it is [not registered as an entry point](#) but present in `sys.path`. This is for development only. If `path` is also present, `module` will only be used to name the module but not to locate it.
 - `options` (object) – Options passed to the module. Defaults to an empty dictionary.
-- `path` (string) – The module's path (e.g. `/path/to/a/b/c.py`) indicating where to find the module if it is not registered as an entry point and not present in `sys.path`. This is for development only.
+- `path` (string) – The module's absolute path (e.g. `/path/to/a/b/c.py`) indicating where to find the module if it is not registered as an entry point and not present in `sys.path`. This is for development only.
 
 By default, all modules installed in `sys.path` are loaded and enabled even if they are not mentioned in the configuration.
 
 
-## Devices
+### Devices
 
 Several modules interact with external devices and follow a similar pattern when defining the configuration of these devices. This configuration starts with a `devices` attribute in the module options, which defines a list of devices. Each device can the following properties:
 
@@ -52,6 +73,9 @@ Several modules interact with external devices and follow a similar pattern when
   - `address` (number or string) – The address of the device, such as an IP address and port (e.g. `17.244.221.152:6513`), a full address with credentials (e.g. `user:pass@server.net`), a serial port (e.g. `COM3` or `/dev/tty.usbmodem1101`) or a USB bus address (e.g. `5`).
   - `serial` (string) – The serial number of the device, as defined by the manufacturer.
 - Other options depending on the module and `model`.
+
+Below is an example:
+
 ```yml
 units:
   ksp:
@@ -60,7 +84,7 @@ units:
         - id: RA1
           label: Rocket alpha 1
           model: alpha
-          address: LaunchingPads.1
+          address: LaunchingPads/1
           # <- Other options here
         - id: RA2
           # ...

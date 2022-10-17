@@ -1,0 +1,37 @@
+export const title = 'Numato';
+
+
+# Numato
+
+Version: 2.0
+
+
+## Introduction
+
+This module adds support for certain Numato relay modules, such as the [16 Channel USB Relay Module](https://numato.com/product/16-channel-usb-relay-module/) and the [32 Channel USB Relay Module](https://numato.com/product/32-channel-usb-relay-module/).
+
+
+## Device configuration
+
+This module follows the standard definition of devices. In addition to the standard properties of a device, it requires the following.
+
+- `address` (string, required) – The address of the device, such as `/dev/tty.usbmodem1101` or `COM3`. This is the serial number of the device, which can be found on the back of the device. This is a required field.
+- `model` (string, required) – The device model; only `relayboard` is permitted.
+- `relay_count` (integer, required) – The number of relays.
+
+An example is shown below.
+
+
+```yml
+devices:
+  - id: RB
+    label: Relay board
+    kind: relayboard
+    address: /dev/tty.usbmodem1101
+    relay_count: 32
+```
+
+
+## Device nodes
+
+Each device generates one binary node per relay. The node id is `<device id>/<relay index>`, with the relay index starting at 0. For the example configuration, this leads to `RB/0`, `RB/1`, etc.

@@ -1,12 +1,36 @@
+import { Brand } from '../shared';
+
 export const title = 'Unit development';
 
 
 # Unit development
 
 
-## Getting started
+## Getting started with the simple template
 
-The easiest way to get started is to copy the template unit provided in the PR–1 code repository.
+The easiest way to get started is by copying the template unit provided in the <Brand /> code repository, in the `units/template` repository. You can start by replacing all instances of `simple` with the name of your unit.
+
+This template unit provides both a backend and frontend, however feel free to remove the frontend if it is not needed. Furthermore, the frontend includes styles, which are needed in most cases. The frontend relies on [htm](https://github.com/developit/htm) instead of regular JSX such that it doesn't require any preprocessing.
+
+To test the unit, install it in [editable mode](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs). This will add the package to the Python import path through a symbolic link.
+
+```sh
+$ pip install -e .
+```
+
+The unit will be loaded by default, however it can be useful to load it in development mode by editing the setup's configuration (TODO: Add a anchor link).
+
+
+## Getting started with the advanced template
+
+Unlike the unit above, this template includes npm scripts to preprocess source code of the frontend:
+
+- Scripts are written in TSX (TypeScript+JSX) which is bundled and compiled to JavaScript.
+- Styles are written in SCSS which is compiled to CSS.
+
+This configuration requires Node.js to run appropriate preprocessors.
+
+The provided npm scripts ensure that the generated files will be at the correct location for the Python package to function. They can be triggered by running `npm run build` after installing dependencies with `npm install`, in the `client` directory.
 
 
 ## Unit structure
@@ -16,9 +40,11 @@ The easiest way to get started is to copy the template unit provided in the PR�
 
 At its core, a unit is a Python object (usually a module) referenced by [an entry point](https://setuptools.pypa.io/en/latest/userguide/entry_point.html) named `pr1.units`. This object corresponds to the unit's backend and is the main extension a unit provides. It can do anything a typical Python program could do: interact with devices, make HTTP requests, write files, etc.
 
-In addition to this, a unit can contain a frontend to add custom UI elements to the application. These can go from simple icons and labels to full views used to manually control certain devices or report sensor data.
+In addition to this, a unit can contain a frontend to add custom UI elements to the application. These can go from simple icons and labels to full views used to manually control certain devices or report sensor data. Complex components are written in the form of [React](https://reactjs.org/) components.
 
-Here is a list various extension points that a unit can implement:
+Components should preferably use style classes of the standard application to ensure a consistent look and feel across the application. However, they can also import their own CSS through the `styleSheets` extension point.
+
+Here is a list of the various extension points that a unit can or should implement:
 
 - **Backend**
   - `Executor` (optional) – The main class of a unit which handles the unit's configuration and communication with devices. There is a single executor instance per unit.
@@ -26,11 +52,14 @@ Here is a list various extension points that a unit can implement:
   - `Runner` (optional) – A class holding the unit's configuration with respect to a chip and triggering actions when a protocol is running. There is a single runner instance per chip and per unit.
   - `client_path` (optional) – The path to the unit's frontend entry point. All files in the directory and subdirectories will also be made available for requests by the frontend.
   - `metadata` – An instance of `pr1.base.Metadata` which provides information about the unit.
+  - `namespace` – The unit's name.
 - **Frontend** (optional, only if `client_path` is provided by the backend)
   - `MatrixEditor` (optional)
-  - `createFeatures()` (optional) – Provides a list of icon and label pairs, known as _features_, that describe the unit's functionality during a segment.
-  - `getGeneralTabs()` (optional) – Provides tabs to be displayed the sidebar.
-  - `getChipTabs()` (optional) – Provides tabs to be displayed in the chip view.
+  - `createFeatures()` (optional) – A function providing a list of icon and label pairs, known as _features_, that describe the unit's functionality during a segment.
+  - `getGeneralTabs()` (optional) – A function providing a list of tabs to be displayed the sidebar.
+  - `getChipTabs()` (optional) – A function providing a list of tabs to be displayed in the chip view.
+  - `namespace` – The unit's name.
+  - `styleSheets` (optional) – A array of [`CSSStyleSheet` objects](https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleSheet) to be loaded with the unit. A common way of providing such objects is by using [CSS Module Scripts](https://web.dev/css-module-scripts/).
 
 
 ### Examples
@@ -55,7 +84,7 @@ This section lists examples of which extension points a unit would typically imp
   - Backend
     - `Executor` – Provides this new functionality.
   - Frontend
-    - `createFeatures()` – Provides a UI for the new functionality.
+    - `getGeneralTabs()` – Provides a UI for the new functionality.
 
 Many built-in features of the application are in fact provided by units: experiment metadata, built-in protocol constructs, timers, etc.
 
@@ -69,11 +98,11 @@ The file structure of a typical unit with a frontend is as follows:
 ├── pyproject.toml
 ├── setup.py
 ├── client
-│   ├── package.json
-│   ├── dist (generated)
+│   ├── package.json
+│   ├── dist (generated)
 │   │   ├── __init__.py
-│   │   └── index.js
-│   └── src
+│   │   └── index.js
+│   └── src
 │       └── index.tsx
 └── pr1_ksp
     ├── __init__.py
@@ -120,6 +149,11 @@ Reloading the backend will have many specific effects:
 - If the user is currently working on a draft protocol, this draft will be re-compiled to make use of the updated parser, if any.
 - More effects to come on the runner.
 
+Reloading comes with important caveats:
+
+- Files imported by the entry frontend file will not be reloaded, including style sheets.
+- More to come.
+
 If things do not behave as expected after reloading, restarting the application will likely resolve most issues.
 
 Units that do not provide a Python module as entry point cannot be reloaded.
@@ -127,7 +161,7 @@ Units that do not provide a Python module as entry point cannot be reloaded.
 
 ### Effects of reloading the frontend
 
-Reloading the frontend will cause the app to [`import()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import) the unit's client again. A query parameter with a timestamp (e.g. `?1660675147822`) will be appended to the request URL to avoid caching.
+Reloading the frontend will cause the app to [`import()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import) the unit's client again. A query parameter with a timestamp with millisecond resolution (e.g. `?1660675147822`) will be appended to the request URL to avoid caching.
 
 The current state of the unit's components will be discarded. Unwanted effects should be minimal as the state of each component should be kept contained and devoid of side effects.
 
