@@ -18,7 +18,7 @@ This module adds partial support for a server obeying the [OPC-UA protocol](http
 This module follows the standard definition of devices.  In addition to the standard properties of a device, it requires the following.
 
 - `address` (string, required) – The address of the device, such as `opc.tcp://192.168.0.23:4840/a/b`.
-- `nodes` (required) – A list that maps physical (i.e. OPC-UA) nodes to virtual (i.e. <Brand />) nodes, with the following properties:
+- `nodes` (required) – A list that maps physical (i.e. OPC-UA) nodes to virtual (i.e. {Brand}) nodes, with the following properties:
   - `id` (identifier, required) – The id of the virtual node.
   - `location` (string, required) – The location of the physical node, such as `ns=3;i=2` or `ns=3;s="Foo bar".S02`.
   - `type` (string, required) – The type of the physical node, and thus of the virtual node. The following values are supported:
