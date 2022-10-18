@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>{{title}}</title>
-    <link href="{{{stylesPath}}}" rel="stylesheet">
+    <link href="{{{siteUrl}}}styles.css" rel="stylesheet">
     <!-- <link href="https://cdn.skypack.dev/highlight.js/styles/github.css" rel="stylesheet"> -->
     <script type="module" defer>
       import highlightJs from 'https://cdn.skypack.dev/highlight.js';
@@ -38,7 +38,7 @@
       <aside class="aside">
         {{#sectionEntry}}
           <div class="product">
-            <a href="/" class="product-back">Home</a>
+            <a href="{{{siteUrl}}}" class="product-back">Home</a>
             <a href="{{sectionEntry.outUrl}}" class="product-title">{{sectionEntry.title}}</a>
           </div>
         {{/sectionEntry}}

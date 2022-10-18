@@ -266,6 +266,8 @@ $aside-margin: 2rem;
 }
 
 .toc {
+  display: none;
+
   &-title {
     margin-bottom: 0.4rem;
     font-weight: 500;

@@ -114,7 +114,7 @@ for (let entry of entries) {
     contents: elementText,
     navigation,
     sectionEntry: (ancestors[0] ?? null),
-    stylesPath: siteUrl + 'styles.css',
+    siteUrl,
     title: entry.title ?? 'Untitled'
   });
 
