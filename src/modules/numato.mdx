@@ -11,6 +11,11 @@ Version: 2.0
 This module adds support for certain Numato relay modules, such as the [16 Channel USB Relay Module](https://numato.com/product/16-channel-usb-relay-module/) and the [32 Channel USB Relay Module](https://numato.com/product/32-channel-usb-relay-module/).
 
 
+## Usage
+
+Each configured device generates one binary node per relay. The node id is `<device id>/<relay index>`, with the relay index starting at 0. For the example configuration, this leads to `RB/0`, `RB/1`, etc.
+
+
 ## Device configuration
 
 This module follows the standard definition of devices. In addition to the standard properties of a device, it requires the following.
@@ -30,8 +35,3 @@ devices:
     address: /dev/tty.usbmodem1101
     relay_count: 32
 ```
-
-
-## Device nodes
-
-Each device generates one binary node per relay. The node id is `<device id>/<relay index>`, with the relay index starting at 0. For the example configuration, this leads to `RB/0`, `RB/1`, etc.

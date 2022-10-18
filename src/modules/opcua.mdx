@@ -13,6 +13,11 @@ Version: 1.0
 This module adds partial support for a server obeying the [OPC-UA protocol](https://opcfoundation.org/about/opc-technologies/opc-ua/) using [opcua-asyncio](https://github.com/FreeOpcUa/opcua-asyncio).
 
 
+## Usage
+
+Each device configured generates a node for each entry in the `nodes` list, which can then be used by any node consumer.
+
+
 ## Device configuration
 
 This module follows the standard definition of devices.  In addition to the standard properties of a device, it requires the following.
@@ -41,8 +46,3 @@ devices:
         location: ns=3;i=4
         type: bool
 ```
-
-
-## Device nodes
-
-Each device generates a node for each entry in the `nodes` list, which can then be used by any node consumer.

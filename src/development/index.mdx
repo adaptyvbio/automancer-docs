@@ -147,12 +147,11 @@ Reloading the backend will have many specific effects:
 - The existing executor, if any, will be destroyed.
 - A new executor will be created and initialized if the unit provides an `Executor` class.
 - If the user is currently working on a draft protocol, this draft will be re-compiled to make use of the updated parser, if any.
-- More effects to come on the runner.
+- All chips will be unserialized again, therefore their runners will be recreated and their condition might change if the responsible runner was reloaded.
 
 Reloading comes with important caveats:
 
 - Files imported by the entry frontend file will not be reloaded, including style sheets.
-- More to come.
 
 If things do not behave as expected after reloading, restarting the application will likely resolve most issues.
 

@@ -1,0 +1,64 @@
+import { Brand } from '../shared';
+
+export const title = 'NIS-Elements capture for Adaptyv Biosystems';
+
+
+# {title}
+
+Version: 1.0
+
+
+## Introduction
+
+This module adds support for a specific microscope image capture procedure powered by [NIS-Elements](https://www.microscope.healthcare.nikon.com/products/software/nis-elements) macros. The procedure triggers the capture of images from a Nikon microscope with specific settings (e.g. exposure, optical configuration, etc.) and on one or more grids of points described by parallelograms.
+
+
+## Usage
+
+To configure an experiment:
+
+1. Start {Brand} with NIS-Elements already running.
+1. In the experiment settings, set the number of grids ("chips") to capture.
+1. Press the "Live" button in NIS-Elements to start the capture. This will allow you to see your sample while adjusting the stage's location.
+1. Click the "Query points" button in {Brand}, and then move the microscope stage to successive points as indicated by NIS-Elements. The order of points is top-left (1), top-right (2), bottom-right (3), bottom-left (4).
+1. Back to the experiment settings {Brand}, you can check that points were recorded. The points are saved in the experiment settings and will be recovered when restarting {Brand}.
+
+To create a capture sequence, use the `capture` attribute which acts as a process and accepts the following arguments:
+
+- `exposure` (float, required) – The exposure time in milliseconds.
+- `objective` (string, required) – The name of the objective to use.
+- `optconf` (string, required) – The name of the optical configuration to use.
+- `save` (string, required) – The relative path of the file to save the image of each grid to. The path must end with `.nd2` and contain a single instance of `{}`, which will be replaced by the grid number, starting at 0. This is also the case when capturing a single grid.
+
+The list of objectives and optical configurations are listed in the experiment settings.
+
+```yml
+actions:
+  - capture:
+      exposure: 300
+      objective: ...
+      optconf: ...
+      save: images/brightfield_{}.nd2
+```
+
+The process is then executed as follows:
+
+1. Points are created in the ND Acquisition panel of NIS-Elements.
+1. NIS-Elements sets the microscope's settings, starts ND Acquisition and captures every image from left to right, and then top to bottom.
+1. The previous steps are repeated for every grid, creating one nd2 file per grid.
+
+It is not possible to pause this process, and errors that occur in NIS-Elements will not be reported.
+
+
+## Setup configuration
+
+This module does not allow using more than one microscope.
+
+- `nis_path` (string) – The path to the NIS-Elements executable. Defaults to `C:\Program Files\NIS-Elements\nis_ar.exe` which should work for most applications.
+- `stage_bounds` (dictionary with `x`/`y`/`z` as keys and two comma-separated integers as values) – Stage position limits in µm, in the form of `<minimum>, <maximum>`, used when generating points. Points outside the bounds will not be captured, but no error will be emitted in that case. Defaults to no coordinate check, which can damage the microscope. Typical values would be the following:
+  ```yml
+  stage_bounds:
+    x: -57000, 57000
+    y: -37500, 37500
+    z: 0, 6000
+  ```
