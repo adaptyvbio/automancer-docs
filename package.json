@@ -7,6 +7,9 @@
     "build:pages": "node build.js",
     "build:pages:watch": "fish -c 'while sleep 0.1; find src | entr -d npm run build:pages; end'"
   },
+  "dependencies": {
+    "remark-gfm": "^3.0.1"
+  },
   "devDependencies": {
     "@mdx-js/esbuild": "^2.1.2",
     "esbuild": "^0.14.49",

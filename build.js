@@ -6,6 +6,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as ReactDOMServer from 'react-dom/server';
 import { jsx } from 'react/jsx-runtime';
+import remarkGfm from 'remark-gfm';
 import glob from 'tiny-glob';
 import { fileURLToPath } from 'url';
 
@@ -26,7 +27,10 @@ await esbuild.build({
   entryPoints: rawPaths,
   outdir: tmpPath,
   format: 'esm',
-  plugins: [mdx({ allowDangerousRemoteMdx: true })],
+  plugins: [mdx({
+    allowDangerousRemoteMdx: true,
+    remarkPlugins: [remarkGfm]
+  })],
   bundle: true,
   minify: true
 });
