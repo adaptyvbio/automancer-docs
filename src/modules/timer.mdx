@@ -8,22 +8,18 @@ Version: 1.0
 
 ## Introduction
 
-The timer module provides a simple timer.
+This module provides a simple timer.
 
 
 ## Usage
 
-This modules features a single `duration` attribute which takes a duration as argument and generates a corresponding process. The process can be paused, resumed and skipped.
+This module features a single `wait` attribute which takes a duration as argument and generates a corresponding process. The process can be paused, resumed and halted without delay.
 
 ```yml
 actions:
-  - duration: 300 ms
-  - duration: 1 hr 5 min
+  - wait: 300 ms
+  - wait: 1 hr 5 min
+  - wait: ${{ 1.0 * unit.hr + 5.0 * unit.min }}
 ```
 
-The resolution and latency of the timer depend on the Python implementation and platform, as well as the behavior of other modules running in parallel. In practice, the timer will be accurate to within a few milliseconds but this is not guaranteed. Furthermore, it possible that the timer finish before the provided duration if that difference is within the system clock resolution.
-
-
-## Relevant RFCs
-
-See RFCs 71 & 140 for upcoming revisions.
+The resolution and latency of the timer depend on the Python implementation and platform, as well as the behavior of other modules running in parallel. In practice, the timer will unlikely be more accurate than 100 ms and provide such a low value will produce a warning. Furthermore, it possible that the timer finish before the provided duration if that difference is within the system clock resolution. A warning will be produced if the observed delay is significantly different compared to the provided value.

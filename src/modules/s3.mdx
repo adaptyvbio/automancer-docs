@@ -1,0 +1,47 @@
+export const title = 'S3';
+
+
+# {title}
+
+
+## Introduction
+
+This module provides file upload to AWS's S3 service, powered by the official [boto3 python package](https://github.com/boto/boto3). Both singlepart and multipart uploads are supported.
+
+
+## Usage
+
+```yml
+actions:
+  - s3-upload:
+      source: data2.txt
+      target: /data/2.txt
+      bucket: name-of-bucket
+      multipart: true
+```
+
+The following attributes are supported:
+
+- `source` (data object, required) – A reference to the source data.
+- `target` (path object, required) – The path to the target path in the bucket (`Key` in the S3 nomenclature).
+- `bucket` (string, required) – The bucket's name.
+- `region` (string, required) – The bucket's region.
+- `multipart` (boolean) – Whether to use multipart upload. Defaults to `false`.
+- `credentials` (object) – Credentials to write to the the bucket. If missing, falls back to [boto3's lookup logic](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials). Logging in with the AWS CLI is therefore sufficient to set credentials.
+  - `access_key_id` (required)
+  - `secret_access_key` (required)
+  - `session_token` (required)
+
+All other options are left to their default value.
+
+Singlepart uploads cannot be halted or paused. Multipart uploads can be halted and paused by stopping once the current part has been uploaded. If halted, even while uploading the last part, the upload is canceled and does not appear in the bucket. If the process exits for an unexpected reason, the incomplete multipart upload will remain in storage and will be billed accordingly; the upload will need to be cleaned up manually.
+
+
+## References
+
+- [Amazon S3 multipart upload limits](https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html)
+
+
+## Notes
+
+229
