@@ -1,9 +1,11 @@
 {
   "type": "module",
   "scripts": {
-    "build": "npm run build:css && npm run build:pages",
-    "build:css": "sass styles/index.scss:dist/styles.css --no-source-map",
-    "build:pages": "node build.js"
+    "build": "npm run build:assets && npm run build:styles && npm run build:pages",
+    "build:assets": "mkdir -p dist && cp -r assets dist/",
+    "build:styles": "sass styles/index.scss:dist/styles.css --no-source-map",
+    "build:pages": "node build.js",
+    "build:pages:watch": "fish -c 'while sleep 0.1; find src | entr -d npm run build:pages; end'"
   },
   "devDependencies": {
     "@mdx-js/esbuild": "^2.1.2",
