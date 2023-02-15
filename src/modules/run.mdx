@@ -1,0 +1,62 @@
+import { ModuleBanner } from '../components/module-banner.jsx';
+
+export const title = 'Run command';
+
+
+# {title}
+
+Version: 1.0
+
+Supported platforms: macOS, Linux
+
+This process is not supported in untrusted mode.
+
+{/* <ModuleBanner title={title} version="1.0" /> */}
+
+
+## Introduction
+
+This module provides a process to execute terminal commands.
+
+
+## Usage
+
+```yml
+actions:
+  - run: node ./scripts/build.js
+  - run:
+      command: node build.js
+      cwd: ./scripts
+      env:
+        DEBUG: 1
+      ignore_exit_code: true
+      halt_action: sigterm
+      shell: true
+      stderr: @{{ stderr }}
+      stdout: @{{ stdout }}
+```
+
+The following options are supported:
+
+- `command` (string, required) – The command to run or path to executable.
+- `cwd` (path object) – The current working directory. Defaults to the experiment's directory.
+- `env` (dictionary of strings and strings) – Environment variables.
+- `ignore_exit_code` (boolean) – Whether to ignore non-zero exit codes. If false, an error will be raised if the command returns with a non-zero exit code. Defaults to false.
+- `halt_action` (enum or int) – The action to use when halting the process. Possible values are:
+    - `none` – Does nothing.
+    - `sigint` – Sends a SIGINT signal.
+    - `sigkill` – Sends a SIGKILL signal.
+    - `sigterm` – Sends a SIGTERM signal.
+    - an integer – Sends the corresponding signal. Must be between 0 and 255.
+
+  Defaults to `sigint`.
+- `shell` (boolean) – Whether to run the command in a shell as specified by `$SHELL`. Defaults to false.
+- `stderr` (binary output data object) – A reference to the standard error stream's destination.
+- `stdout` (binary output data object) – A reference to the standard output stream's destination.
+
+All halt actions are followed by a SIGKILL signal after 30 seconds, which forces the program to exit. An error is raised even if `ignore_exit_code` is `false`.
+
+
+## Notes
+
+234

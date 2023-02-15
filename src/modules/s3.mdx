@@ -3,6 +3,8 @@ export const title = 'S3';
 
 # {title}
 
+Version: 1.0
+
 
 ## Introduction
 
@@ -20,9 +22,9 @@ actions:
       multipart: true
 ```
 
-The following attributes are supported:
+The following options are supported:
 
-- `source` (data object, required) – A reference to the source data.
+- `source` (binary input data object, required) – A reference to the source data.
 - `target` (path object, required) – The path to the target path in the bucket (`Key` in the S3 nomenclature).
 - `bucket` (string, required) – The bucket's name.
 - `region` (string, required) – The bucket's region.

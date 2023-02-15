@@ -1,3 +1,4 @@
+@use "./modulebanner";
 @use "./reset";
 @use "./mixins" as *;
 
@@ -145,7 +146,7 @@ $aside-margin: 2rem;
   & {
     display: grid;
     column-gap: 3rem;
-    grid-template-columns: 1fr 240px;
+    grid-template-columns: auto 240px;
 
     padding: 3rem;
     overflow-y: auto;
@@ -153,7 +154,15 @@ $aside-margin: 2rem;
 }
 
 .main {
+  & {
+    max-width: 800px;
+  }
+
+
+  // General
+
   h1, h2, h3, h4, h5, h6 {
+    line-height: 1.2;
     font-family: Inter;
     font-weight: 700;
   }
@@ -179,16 +188,13 @@ $aside-margin: 2rem;
   }
 
   .lead {
+    margin: 0.4rem 0;
     max-width: 700px;
 
     color: #666;
-    font-size: 1.6rem;
-    font-weight: 500;
-    line-height: 1.4;
-  }
-
-  p:not(.lead) {
-    text-align: justify;
+    font-size: 1.8rem;
+    line-height: 1.2;
+    text-align: start;
   }
 
 
@@ -262,6 +268,30 @@ $aside-margin: 2rem;
     color: #0074d9;
     text-decoration: underline;
     text-underline-offset: 2px;
+  }
+
+
+  // Tables
+
+  table {
+    border-collapse: collapse;
+  }
+
+  th, td {
+    padding: 0.4rem 0;
+  }
+
+  th {
+    border-bottom: 1px solid #eee;
+
+    color: #666;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  td {
+    border-bottom: 1px solid #eee;
   }
 }
 

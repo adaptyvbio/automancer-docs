@@ -1,0 +1,51 @@
+export const title = 'Data objects';
+
+
+# {title}
+
+
+## Description
+
+Modules that deal with data usually consume and produce _data objects_, opaque objects that can be defined by one of the following Python objects:
+
+- An absolute or relative path which implements the `os.PathLike` interface.
+- A file-like object, most often an object which implements the `io.IOBase` interface.
+- A Python object, or reference to that object when writing, which consists in a sequence of bytes, such as a `bytes`, `bytearray`, `memoryview` or `str`.
+
+A data object can contain binary or text data. Differences on the underlying Python object are shown in this table:
+
+| Variant | Binary mode | Text mode |
+|---------|---|-|
+| path    | `os.PathLike` | `os.PathLike` |
+| file    | `io.RawIOBase` | `io.TextIOBase` |
+| bytes   | `bytes`, `bytearray` or `memoryview` | `str` |
+
+Furthermore, data objects are either readable or writable.
+
+
+## Python API
+
+The Python API used to handle data objects is agnostic to the underlying object.
+
+```py
+# For readable objects
+
+with obj.open() as handle:
+  data = handle.read()
+
+handle = obj.open()
+data = handle.read()
+handle.close()
+
+
+# For writable objects
+
+with obj.open() as handle:
+  handle.write(b"Hello, world!")
+
+# or
+
+handle = obj.open()
+handle.write(b"Hello, world!")
+handle.close()
+```

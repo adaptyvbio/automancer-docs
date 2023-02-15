@@ -1,0 +1,68 @@
+export const title = 'Using expressions';
+export const subtitle = 'Use compile-time and runtime expressions to create complex and reactive protocols.';
+
+
+# {title}
+
+<p className="lead">{subtitle}</p>
+
+
+## General
+
+_Expressions_ are small Python expressions that can be used in various locations in a protocol.
+
+
+## Using static expressions
+
+_Static expressions_ are executed at compile-time, in other words every time a protocol is compiled, even when not executed.
+
+```yml
+wait: ${{ * unit.sec }}
+```
+
+
+## Using dynamic expressions
+
+Unlike static expressions, _dynamic expressions_ are executed at runtime.
+
+
+Dynamic expressions can contain compile-time components to guarantee the validity of parts of the expression earlier on. This is achieved with the `static()` function; its argument will be evaluated at compile-time and used at runtime. For example, the expression `${{ static(time()) - time() }}` will return the number of seconds from compilation to execution.
+
+
+## Using binding expressions
+
+_Binding expressions_ are a special kind of expression used to reference a location for the output of an operation. For example, after capturing a picture, we might want to process the captured data rather than saving it directly in a file. This can be achieved using a binding expression, in the form `@{{ ... }}`.
+
+```yml
+actions:
+  - Camera.capture:
+      exposure: 300 ms
+      output: @{{ data }}
+```
+
+In this example, we are saving the captured data into the `data` variable to process it later onn. The type of the variable is set by the capture module.
+
+There are five binding expression types:
+
+- _Named bindings_ write the received value to a variable and are written in the form `${{ <var> }}`, e.g. `${{ foo }}`.
+- _Attribute bindings_ write the value to an attribute and are written in the form `${{ <expr>.<attr> }}`, e.g. `${{ foo.bar }}`. The attribute will be set using `setattr()`.
+- _Property bindings_ write the value to a property and are written in the form `${{ <expr>[<expr>] }}`, e.g. `${{ foo['bar'] }}` or `${{ foo[5] }}`.
+- _Null bindings_ discard the value and are written as `${{ _ }}`. They are variant of named bindings where the variable's name is `_`. Unlike regular Python, the data will be actually discarded rather than set to this variable.
+- _Tuple bindings_ are a special type of binding used to match a tuple. They are composed of zero or more children bindings which will be matched to their corresponding sub-values. In the expression `@{{ x, y.a, _ }}`, the first and second items of the tuple will be set to `x` and `y.a`, respectively a named and an attribute binding. The third item will be discarded. An empty tuple `${{ () }}` is also valid when receiving an empty tuple.
+
+List bindings are not supported.
+
+Sub-expressions contained inside bindings are not limited to simple variables or literals. Consider the following examples:
+
+- `@{{ {}['a'] }}` – Here the received value will be discarded because the dictionary is not saved. A warning will be issued in this situation.
+- `@{{ obj.data[index * 2 + 1] }}`
+- `@{{ pt.x, (_, pt.y), pt.z }}`
+
+All expressions are dynamic, thus executed at runtime. Static components can still be used as described in the previous section, for instance `%{{ items[static(index * 2)] }}`.
+
+For details on how to consume bindings, see [...].
+
+
+## Notes
+
+73, 166, 175, 192, 253
