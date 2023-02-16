@@ -197,6 +197,14 @@ $aside-margin: 2rem;
     text-align: start;
   }
 
+  blockquote {
+    margin: 1rem 0;
+    padding: 0.6rem 0 0.6rem 1rem;
+
+    border-left: 6px solid #eee;
+    color: #333;
+  }
+
 
   // Code
 
@@ -225,7 +233,7 @@ $aside-margin: 2rem;
     display: block;
   }
 
-  p code, li code {
+  :is(p, li, td) code {
     padding: 0.2em 0.4em;
     background-color: #eee;
     border-radius: 4px;
@@ -278,7 +286,7 @@ $aside-margin: 2rem;
   }
 
   th, td {
-    padding: 0.4rem 0;
+    padding: 0.4rem 1rem 0.4rem 0;
   }
 
   th {

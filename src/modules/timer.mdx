@@ -23,3 +23,8 @@ actions:
 ```
 
 The resolution and latency of the timer depend on the Python implementation and platform, as well as the behavior of other modules running in parallel. In practice, the timer will unlikely be more accurate than 100 ms and provide such a low value will produce a warning. Furthermore, it possible that the timer finish before the provided duration if that difference is within the system clock resolution. A warning will be produced if the observed delay is significantly different compared to the provided value.
+
+
+## Notes
+
+140

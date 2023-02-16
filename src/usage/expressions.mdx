@@ -17,7 +17,7 @@ _Expressions_ are small Python expressions that can be used in various locations
 _Static expressions_ are executed at compile-time, in other words every time a protocol is compiled, even when not executed.
 
 ```yml
-wait: ${{ * unit.sec }}
+wait: ${{ 5 * unit.sec }}
 ```
 
 
@@ -25,8 +25,15 @@ wait: ${{ * unit.sec }}
 
 Unlike static expressions, _dynamic expressions_ are executed at runtime.
 
-
 Dynamic expressions can contain compile-time components to guarantee the validity of parts of the expression earlier on. This is achieved with the `static()` function; its argument will be evaluated at compile-time and used at runtime. For example, the expression `${{ static(time()) - time() }}` will return the number of seconds from compilation to execution.
+
+Certain dynamic expressions are executed once, whereas others are executed as frequently as possible.
+
+```yml
+steps:
+  - wait: %{{ 5 * unit.min }} # Executed once
+    expect: %{{ devices.Foo.bar > 36.0 }} # Executed every time variable 'Foo.bar' changes
+```
 
 
 ## Using binding expressions
@@ -40,7 +47,7 @@ actions:
       output: @{{ data }}
 ```
 
-In this example, we are saving the captured data into the `data` variable to process it later onn. The type of the variable is set by the capture module.
+In this example, we are saving the captured data into the `data` variable to process it later on. The type of the variable is set by the capture module.
 
 There are five binding expression types:
 
@@ -61,6 +68,25 @@ Sub-expressions contained inside bindings are not limited to simple variables or
 All expressions are dynamic, thus executed at runtime. Static components can still be used as described in the previous section, for instance `%{{ items[static(index * 2)] }}`.
 
 For details on how to consume bindings, see [...].
+
+
+## Using global variables
+
+Expressions have access to all variables returned by `globals()`, as well as a few additional ones, detailed in this table.
+
+| Name | Environment | Type | Static | Dynamic | Untrusted | Description |
+|-|-|-|:-:|:-:|:-:|-|
+| `time` | System | `() -> float` | ⚠ | ✔ | ✔ | Alias for `time.time` |
+| `env` | System | dictionary | ✔ | ✔ |   | Alias for `os.environ` |
+| `Path` | System | `type` | ✔ | ✔ | ✔ | Alias for `pathlib.Path` |
+| `ExperimentPath` | System | `type` | ✔ |   | ✔ | Opaque variant of `pathlib.Path` where the starting directory is the experiment's directory |
+| `ExperimentPath` | System | `type` |   | ✔ |   | Sub-class of `pathlib.Path` where the starting directory is the experiment's directory |
+| `warn` | System | `(message: str) -> None` |   | ✔ |  | Function which emits a warning when called |
+| `devices` | Devices | – |   | ✔ |   | See [Devices] |
+| `parent` | n/a | – | ✔ | ✔ |   | Global object of the parent block |
+| `unit` | System | `pint.UnitRegistry` | ✔ | ✔ |   | Unit registry instance, see [Units] |
+
+> ⚠ – Available, however a warning will be issued.
 
 
 ## Notes
