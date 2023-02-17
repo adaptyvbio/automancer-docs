@@ -52,38 +52,15 @@ export default (props) => {
                 <div class="section">Expressions</div>
                 <div class="list">
                   {props.navigation.map(({ entry }) => (
-                    <div class="item">
-                      <a href={entry.outUrl} class="item-link">{entry.title}</a>
+                    <div class={formatClass('item', { '_active': entry === props.entry })}>
+                      <a href={entry.outUrl} class="item-link">
+                        <div class="text">{entry.title}</div>
+                      </a>
                     </div>
                   ))}
                 </div>
               </div>
             </nav>
-
-              {/* <!-- <div class="item">
-                <a href="#" class="item-link">Quickstart</a>
-              </div>
-              <div class="item">
-                <a href="#" class="item-link">Quickstart</a>
-              </div>
-              <div class="item _open">
-                <a href="#" class="item-link">Quickstart</a>
-                <div class="list">
-                  <div class="item">
-                    <a href="#" class="item-link _active">Manage theme settings</a>
-                  </div>
-                  <div class="item">
-                    <a href="#" class="item-link">Manage theme settings</a>
-                  </div>
-                  <div class="item">
-                    <a href="#" class="item-link">Manage theme settings</a>
-                  </div>
-                </div>
-              </div>
-              <div class="item">
-                <a href="#" class="item-link">Quickstart</a>
-              </div> -->
-            </nav> */}
           </aside>
           <div class="center">
             <main class="main">
@@ -119,4 +96,24 @@ export default (props) => {
       </body>
     </html>
   );
+}
+
+
+function formatClass(...input) {
+  return input
+    .filter((item) => item)
+    .flatMap((item) => {
+      if (typeof item === 'string') {
+        return item;
+      } if (Array.isArray(item)) {
+        return formatClass(...item);
+      } if ((typeof item === 'object') && (item.constructor === Object)) {
+        return Object.entries(item)
+          .filter(([key, value]) => (key && value))
+          .map(([key, _value]) => key);
+      }
+
+      return [];
+    })
+    .join(' ');
 }

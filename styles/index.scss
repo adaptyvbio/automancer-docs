@@ -24,6 +24,12 @@ body {
 }
 
 
+code {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+  font-size: 0.9em;
+}
+
+
 $aside-margin: 2rem;
 
 .title {
@@ -73,11 +79,21 @@ $aside-margin: 2rem;
       }
 
       > .list > .item {
-        > .item-link {
-          padding-top: 0.6rem;
-          padding-bottom: 0.6rem;
+        .item-link {
+          display: flex;
+          height: 2.6rem;
 
           background-color: #f6f8fa;
+
+          .text {
+            margin: auto 0;
+            @include text-ellipsis();
+          }
+        }
+
+        &._active .item-link {
+          color: #0074d9;
+          font-weight: 500;
         }
       }
 
@@ -234,9 +250,6 @@ $aside-margin: 2rem;
   }
 
   code {
-    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
-    font-size: 0.9em;
-
     &.hljs {
       overflow: unset;
       padding: unset;

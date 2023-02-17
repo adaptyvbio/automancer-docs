@@ -98,8 +98,6 @@ for (let absPath of procPaths) {
 }
 
 
-// console.log(entries)
-
 for (let entry of entries) {
   let lastAncestor = tree;
   let ancestors = entry.segments.map((segment) => {
@@ -134,6 +132,7 @@ for (let entry of entries) {
   let fullText = '<!DOCTYPE html>' + template({
     breadcumb: [...ancestors.slice(0, -1), entry],
     contents: elementText,
+    entry,
     navigation,
     sectionEntry: (ancestors[0] ?? null),
     siteUrl,
