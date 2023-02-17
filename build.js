@@ -1,6 +1,5 @@
 import mdx from '@mdx-js/esbuild';
 import minimist from 'minimist';
-import Mustache from 'mustache';
 import esbuild from 'esbuild';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -17,15 +16,16 @@ let siteUrl = args['site-url'] ?? '/';
 siteUrl = siteUrl.endsWith('/') ? siteUrl : siteUrl + '/';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const template = (await fs.readFile(__dirname + '/templates/index.html')).toString();
 
 
-let rawPaths = await glob(__dirname + '/src/**/*.mdx', { absolute: true });
-let tmpPath = __dirname + '/tmp-01';
+// Compile pages
+
+let pagesSourceDirPath = await glob(__dirname + '/src/**/*.mdx', { absolute: true });
+let pagesCompiledDirPath = __dirname + '/tmp/build/01';
 
 await esbuild.build({
-  entryPoints: rawPaths,
-  outdir: tmpPath,
+  entryPoints: pagesSourceDirPath,
+  outdir: pagesCompiledDirPath,
   format: 'esm',
   plugins: [mdx({
     allowDangerousRemoteMdx: true,
@@ -36,7 +36,25 @@ await esbuild.build({
 });
 
 
-let procPaths = await glob(tmpPath + '/**/*.js', { absolute: true });
+// Compile templates
+
+let templatesCompiledDirPath = __dirname + '/tmp/build/02';
+
+await esbuild.build({
+  entryPoints: await glob(__dirname + '/templates/*.jsx', { absolute: true }),
+  outdir: templatesCompiledDirPath,
+  inject: [__dirname + '/templates/jsx-factory.js']
+});
+
+
+// Import templates
+
+let { default: template } = await import(templatesCompiledDirPath + '/index.js');
+
+
+// Execute pages
+
+let procPaths = await glob(pagesCompiledDirPath + '/**/*.js', { absolute: true });
 let entries = [];
 let tree = {
   children: {},
@@ -44,7 +62,7 @@ let tree = {
 };
 
 for (let absPath of procPaths) {
-  let relPath = path.relative(tmpPath, absPath);
+  let relPath = path.relative(pagesCompiledDirPath, absPath);
   // let outPath = __dirname + '/dist/' + relPath.replace(/\.js$/, '.html');
 
   let imported = await import(absPath);
@@ -113,7 +131,7 @@ for (let entry of entries) {
   let outDirPath = path.dirname(outPath);
   let element = jsx(entry.imported.default, {});
   let elementText = ReactDOMServer.renderToString(element);
-  let fullText = Mustache.render(template, {
+  let fullText = '<!DOCTYPE html>' + template({
     breadcumb: [...ancestors.slice(0, -1), entry],
     contents: elementText,
     navigation,
