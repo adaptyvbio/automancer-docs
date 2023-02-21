@@ -1,0 +1,135 @@
+export const title = 'Developing processes';
+export const subtitle = 'Create custom processes to add support for special procedures.';
+
+
+# {title}
+
+<p className="lead">{subtitle}</p>
+
+
+## Creating a simple process
+
+A _process_ is an object responsible for the execution of a step. The process attached to a step determines when the step terminates or fails, and whether it can be paused.
+
+Practically, a process is a Python class with a `run()` function returning as an asynchronous iterator. `run()` is called immediately after creating an instance of the class, and only once. The step is marked as terminated once the iterator returns.
+
+```py
+from pr1 import BaseProcess
+
+class Process(BaseProcess):
+  async def run(self, initial_point, *, stack):
+    yield ProcessExecEvent()
+    await asyncio.sleep(2)
+    yield ProcessTerminationEvent()
+```
+
+
+## Sending events
+
+The process' status is reported by sending an instance of one of the four `BaseProcessEvent` classes:
+
+- `ProcessExecEvent` – A regular event.
+- `ProcessPauseEvent` – An event indicating that the process is paused.
+- `ProcessFailureEvent` – An event indicating that the process failed.
+- `ProcessTerminationEvent` – An event indicating the process is terminated but not failed.
+
+No event can be sent after sending a `ProcessFailureEvent` or a `ProcessTerinationEvent`. Furthermore, the iterator should terminate in the same iteration of the event loop. The iterator must not terminate without without one of these two events being yielded beforehand.
+
+The process should send an event shortly after `run()` is called to immediately inform the user on the process' status. This is usually an event report a 0% progress, or a failure event if the requested operation cannot be carried out.
+
+
+## Reporting progress
+
+Progress can be logged and reported to the user by creating a _location_ object a providing it as a parameter to any of the four event constructors. If an event is sent with the default `location=None`, the location is assumed to be unchanged.
+
+```py
+from dataclasses import dataclass
+
+@dataclass
+class ProcessLocation:
+  progress: float
+
+class Process(BaseProcess):
+  async def run(self, ...):
+    yield ProcessExecEvent(location=ProcessLocation(progress=0.0))
+    await obj.run_step1()
+    yield ProcessExecEvent(location=ProcessLocation(progress=0.5))
+    await obj.run_step2()
+    yield ProcessTerminationEvent(location=ProcessLocation(progress=1.0))
+```
+
+Note that any object contained in a event is assumed to be owned by that event. Therefore, changing the location object over time is undefined behavior. To limit this, you can set `frozen=True` to `@dataclass` if the location is a dataclass.
+
+```py
+class Process(BaseProcess):
+  async def run(self, ...):
+    location = ProcessLocation(progress=0.0)
+
+    yield ProcessExecEvent(location=location)
+    await obj.run_step1()
+
+    location.progress = 0.5 # <- Updating the previously sent object is undefined behavior.
+    yield ProcessExecEvent(location=location)
+```
+
+
+## Handling pause and resume
+
+By default, the process is marked as non-pausable, therefore the user is cannot send a pause request. This behavior can be changed by sending a `ProcessExecEvent` with `pausable=True`. This property is retained, therefore sending subsequent events with the default value `pausable=None` will not have any effect.
+
+```py
+yield ProcessExecEvent(pausable=True)
+# The process is now pausable.
+yield ProcessExecEvent()
+# The process is still pausable.
+yield ProcessExecEvent(pausable=False)
+# The process is not pausable anymore.
+```
+
+While the process is marked as pausable, the `pause()` method of the process can be called upon user interaction. Use this method to take action on the `run()` method's execution. From this point, `run()` is expected to yield `ProcessPauseEvent` soon. Other events can still be yielded until the process is paused or if a failure occurs in the meantime. If the pause procedure is expected to take more than one event loop iteration, the process should yield a `ProgramExecEvent` shortly after `pause()` is called to inform the user, and possibly more events until the the process is paused or terminates.
+
+Once a `ProcessPauseEvent` is yielded, the process must not yield any event and must wait for a call to `resume()` to continue. An event should be yielded in the same iteration of the event loop as the call to `resume()`.
+
+```py
+class Process(BaseProcess):
+  def pause(self):
+    # Pause operations and have run() yield a ProcessPauseEvent()
+    pass
+
+  def resume(self):
+    # Resume operations and have run() yield a ProcessExecEvent()
+```
+
+To act on the iterator from `pause()` and `resume()`, you can use some of asyncio's features, such as futures, tasks and events. In this example, the process is in charge of running the asynchronous function `run_complex_procedure()`. The process is paused by cancelling the task corresponding to `run_complex_procedure()` and resumed by triggering an `asyncio.Event`.
+
+```py
+class Process(BaseProcess):
+  def pause(self):
+    self.task.cancel()
+
+  def resume(self):
+    self.resumed_event.set()
+
+  async def run(self, ...):
+    self.resumed_event = asyncio.Event()
+
+    while True:
+      try:
+        yield ProcessExecEvent(pausable=True)
+        self.task = asyncio.create_task(run_complex_procedure())
+      except asyncio.CancelledError:
+        yield ProcessPauseEvent()
+
+        self.resumed_event.unset()
+        await self.resumed_event.wait()
+      else:
+        break
+
+    yield ProcessTerminationEvent()
+```
+
+
+## Handling halt
+
+
+## Creating the corresponding front-end component
