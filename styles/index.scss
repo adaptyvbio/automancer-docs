@@ -94,6 +94,10 @@ $aside-margin: 2rem;
         &._active .item-link {
           color: #0074d9;
           font-weight: 500;
+
+          code {
+            font-weight: 600;
+          }
         }
       }
 
@@ -195,11 +199,12 @@ $aside-margin: 2rem;
   h1, h2, h3, h4, h5, h6 {
     line-height: 1.2;
     font-family: Inter;
-    font-weight: 700;
+    font-weight: 600;
   }
 
   h1 {
     font-size: 2.4rem;
+    font-weight: 700;
   }
 
   h2 {
@@ -208,6 +213,12 @@ $aside-margin: 2rem;
     border-bottom: 2px solid #ddd;
 
     font-size: 1.7rem;
+  }
+
+  h3 {
+    margin: 1.4rem 0 1rem 0;
+
+    font-size: 1.2rem;
     font-weight: 600;
   }
 
@@ -261,7 +272,7 @@ $aside-margin: 2rem;
     display: block;
   }
 
-  :is(p, li, td) code {
+  :is(p, li, td, dt, dd) code {
     padding: 0.2em 0.4em;
     background-color: #eee;
     border-radius: 4px;
@@ -296,9 +307,25 @@ $aside-margin: 2rem;
   }
 
 
+  // Description lists
+
+  dl {
+    margin-left: 1rem;
+  }
+
+  dt:not(:first-child) {
+    margin-top: 1rem;
+  }
+
+  dd {
+    margin-left: 1.4rem;
+    margin-top: 0.4rem;
+  }
+
+
   // Links
 
-  :is(p, li) a {
+  :is(p, li, td, dt, dd) a {
     display: inline;
 
     color: #0074d9;

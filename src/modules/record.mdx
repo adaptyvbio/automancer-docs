@@ -1,0 +1,102 @@
+import { Brand } from '../shared';
+
+export const title = 'Record';
+
+
+# {title}
+
+Version: 1.0
+
+
+## Introduction
+
+This module adds support for data recording.
+
+
+## Usage
+
+Data recording can be performed using the `record:` state attribute. Multiple fields, corresponding to variables that you wish to record, can be defined. The resulting data is stored to a data object.
+
+```yml
+record:
+  fields:
+    - name: Temperature
+      value: %{{ devices.TempSensor.readout }}
+      unit: 5 degC
+    - name: Pressure
+      value: %{{ devices.PressureSensor.readout }}
+      dtype: <f4
+      unit: hPa
+  save: data.xlsx
+actions:
+  - ...
+  - ...
+```
+
+The following options are available for each field:
+
+- `fields` (list, required) – The list of fields to record:
+  - `name` (string) – The field's name.
+  - `value` (dynamic expression, required) – The field's value, to be evaluated every time one of the dependency variables in the expression changes.
+  - `unit` (quantity) – The unit in which the value should be printed. For example, the value `1 GB` with unit `200 MB` would be recorded as `5`. Only supported if value is scalar. Defaults to the unit of value.
+  - `dtype` (string) – The field's data type, as defined in [numpy](https://numpy.org/doc/stable/reference/arrays.dtypes.html). For scalar values, the byte order must be explicitly defined and the native byte order (described as `=`) may not be used. Defaults to the smallest data type which can cover the resulting value (e.g. adding an `i4` an `u8` will result in an `i8`), encoded as little-endian.
+  - `disconnected_value` (value) – The value to write when one of the dependency variables is unavailable. Defaults to `np.nan` for floating-point values, `0` for other scalar values and `False` for boolean values.
+  - `frequency` (quantity) – A higher bound for the frequency at which to record this field.
+- `format` (string) – The format used to save records (see below). Required if their is no output file path or if its extension is ambiguous.
+- `save` (file object, required) – The file object in which to save records.
+- `when_paused` (boolean) – Whether to record when paused. Defaults to false.
+
+A warning will be emitted if any of the recorded values is overflowing and cannot be stored with the provided data type. The written value is undefined behavior in this case.
+
+
+### Choosing an output format
+
+The following output formats are supported.
+
+| Name      | Extension | Streaming | Compression | Description                                                                               |
+|-----------|-----------|:---------:|:-----------:|-------------------------------------------------------------------------------------------|
+| npy       | `.npy`    |     ✔     |             | Numpy array file, can be loaded with `np.load()`                                          |
+| npz       | `.npz`    |     ✔     |   Deflate   | ZIP file containing a Numpy array file called `arr_0.npy`, can be loaded with `np.load()` |
+| xlsx      | `.xlsx`   |           |      ✔      | Excel file                                                                                |
+| csv       | `.csv`    |     ✔     |             | CSV file                                                                                  |
+| json      | `.json`   |     ✔     |             | JSON file                                                                                 |
+| array     | –         |     –     |      –      | `numpy.ndarray` object                                                                    |
+| dataframe | –         |     –     |      –      | `pandas.DataFrame` object                                                                 |
+
+Certain formats support streaming, that is, the possibility for data to be stored gradually rather than all at once. There are mainly two benefits to this approach:
+
+- Storing data gradually requires less memory as newly-obtained chunks of data are stored immediately rather than kept in memory. Without streaming, the program can be killed by the OS if it uses too much memory.
+- If the program crashes, you will be able to recover most of the data as it already written in persistent storage. Without streaming, all of the data is lost.
+
+
+### Recording the status of multiple devices
+
+When using floating-point number data types, the disconnection of a device can be indicated by storing NaN instead of the recorded value. For other data types, there is no sentinel value to accomplish this goal. We can use the `disconnected_value` attribute to create our own sentinel value, such as the largest possible value, e.g. 2<sup>32</sup> - 1 for a 4 bytes unsigned integer, written as `u4`. When this is not an option, the only solution left is to use a boolean field in addition to the value field:
+
+```yml
+fields:
+  - name: Temperature
+    value: %{{ devices.TempSensor.readout }}
+  - name: Temperature connected
+    value: %{{ devices.TempSensor.readout.connected }}
+```
+
+The `<node>.connected` value is a boolean which become false when a device is disconnected, indicating that the first field has invalid data during that time. When dealing with more than one field, we can group their respective `<node>.connected` value into one or more bytes.
+
+```yml
+fields:
+  - name: Temperature 1
+    value: %{{ devices.TempSensor1.readout }}
+  - name: Temperature 2
+    value: %{{ devices.TempSensor2.readout }}
+  - name: Temperatures connected
+    dtype: <u1
+    value: %{{ sum((node << index for index, node in enumerate([devices.TempSensor1.readout.connected, devices.TempSensor2.readout.connected]))) }}
+```
+
+Bit 0 of the third field now corresponds to the connection status of `TempSensor1` and bit 1 to that of `TempSensor2`.
+
+
+## Notes
+
+175, 259

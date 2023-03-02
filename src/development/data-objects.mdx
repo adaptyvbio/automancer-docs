@@ -1,7 +1,7 @@
 export const title = 'Data objects';
 
 
-# {title}
+# Working with data objects
 
 
 ## Description
@@ -14,11 +14,11 @@ Modules that deal with data usually consume and produce _data objects_, opaque o
 
 A data object can contain binary or text data. Differences on the underlying Python object are shown in this table:
 
-| Variant | Binary mode | Text mode |
-|---------|---|-|
-| path    | `os.PathLike` | `os.PathLike` |
-| file    | `io.RawIOBase` | `io.TextIOBase` |
-| bytes   | `bytes`, `bytearray` or `memoryview` | `str` |
+| Variant | Binary mode                          | Text mode       |
+|---------|--------------------------------------|-----------------|
+| path    | `os.PathLike`                        | `os.PathLike`   |
+| file    | `io.RawIOBase`                       | `io.TextIOBase` |
+| bytes   | `bytes`, `bytearray` or `memoryview` | `str`           |
 
 Furthermore, data objects are either readable or writable.
 

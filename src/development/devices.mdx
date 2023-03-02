@@ -3,12 +3,24 @@ import { Brand } from '../shared';
 export const title = 'Devices';
 
 
-# Standardized devices [outdated]
+# Adding support for new devices
 
 
 ## Introduction
 
-{Brand} provides a mechanism to manage devices and make it possible for units to build upon each other. For instance, in the case of a USB device, three units could work together:
+To add new devices, it is recommended to use the devices API provided by {Brand}. This API let's you add new devices with minimal effort while providing many related features out of the box, such as:
+
+- When writing to devices
+  - Writing to devices using the protocol syntax
+  - Manual controlling the device from the UI
+  - Batch-writing to devices
+  - Locking devices to prevent them from being written elsewhere
+  - Handling situations when the device is disconnected
+- When reading device readouts
+  - Recording data over time
+  - Ensuring a condition stays true over time
+
+Furthermore, the use of a common API makes it possible for units to build upon each other. For instance, in the case of a USB device, three units could work together:
 
 1. a low-level unit communicates to the USB driver and provides a low-level interface in the form of binary I/O;
 2. a mid-level unit elevates the low-level interface to a higher level in the form of high-level commands;
@@ -17,45 +29,174 @@ export const title = 'Devices';
 In this context, a device is not necessarily a physical device connected to the computer. It could also be a remotely controlled device, or just a virtual object which is convenient to consider a device.
 
 
-## Recipes
+## Architecture
 
-### Creating a device
+The architecture of the devices API is based on a tree. The root node can be accessed as `Host.root_node` and the leaves represent values which can be read or written. Non-leaf nodes are all instances of `CollectionNode`, that is, they are collections of nodes.
 
-A device is referenced by its identifier which must be unique among all devices and units. A minimal device implementation only needs to implement the identifier as the `self.id` attribute to be valid.
+In most cases, the subtree used when adding a new device is straightforward and can be defined as a `DeviceNode` with multiple custom children nodes, which are subclasses of either `BaseReadableNode` or `BaseWritableNode`. The following example represents the tree for a thermostat:
 
-```py
-class TempSensor:
-  def __init__(self):
-    self.id = 'temp_sensor1'
-
-sensor = TempSensor()
-host.devices[sensor.id] = sensor
+```
+Root (HostRootNode)
+├── ...
+└── MyThermostat (ThermostatDevice <- DeviceNode)
+    ├── readout (ThermostatReadout <- ScalarReadableNode)
+    └── setpoint (ThermostatSetpoint <- ConfigurableWritableNode, ScalarWritableNode)
 ```
 
-The device is registered on the `host.devices` dictionary using its identifier. In a more realistic example, the id `temp_sensor1` would provided by the user as part of setup's configuration.
+The leftmost name on each line represents the identifier of the node, a value which must be unique among all nodes with the same parent node. The identifier of device nodes usually starts with a capital letter. Here, the name `MyThermostat` is chosen by the user whereas `readout` and `setpoint` are fixed nodes of all `ThermostatDevice` instances. The user can reference the values of the device as `MyThermostat.readout` and `MyThermostat.setpoint`.
 
-Unfortunately, in this example, the device won't be usuable by other units as it does not use a common interface. Instead, it can be made to inherit `NodeDevice` and provide a standard interface in the `self.nodes` attribute.
+The `ConfigurableWritableNode` class used to create `ThermostatSetpoint` is a subclass of `ScalarWritableNode` capable of having both a known value and a target value. These can differ if the device is disconnected: in that situation, the target value might be updated but will only be written to the device once it gets reconnected. The known value represents the last value written to the device.
+
+The full tree is visible in the logs when starting the host.
+
+
+## Creating a device
+
+A device node is a instance of a subclass of `DeviceNode`.
 
 ```py
-from pr1.device import NodeDevice
-
-class TempSensor(NodeDevice):
+class ThermostatDevice(DeviceNode):
   def __init__(self):
-    self.id = 'temp_sensor1'
-    self.nodes = [NumericNode(type='f32')]
+    super().__init__()
 
-    def update_callback(value):
-      self.nodes[0].value = value
+    self.connected = True
+    self.id = "<an id chosen by the user>"
+    self.label = "<a label chosen by the user>"
 
-    start_sensor_somethow(update_callback)
+    self.model = "Temperature sensor device 2000"
+    self.owner = "<namespace of the unit>"
+
+    # Dictionary of children nodes
+    self.nodes = dict()
 ```
 
-### Reading from a device
-
-A consumer unit can use the device using the same `host.devices` dictionary used to create devices.
+Devices should be registered on the `Host.devices` dictionary (an alias for `Host.root_node.nodes`) using their identifier. Because devices are created and registered once and only during host initialization, this must happen when the creating and initializaing the unit's executor.
 
 ```py
-sensor = host.devices['temp_sensor1']
+class ThermostatExecutor(BaseExecutor):
+  def __init__(self, conf, *, host):
+    super().__init__()
+
+    self.device = ThermostatDevice()
+    host.devices[self.device.id] = self.device
+
+  async def initialize(self):
+    # Perform any asynchronous work here to initialize the device
+```
+
+This hardcoded example works well for a simple scenario, but it is not suitable to the complex setup a user might be working with. It is best to let the user choose how many devices to create, and the identifier, name, and address (e.g. COM port or IP address) of each device. A more complete example using the unit's configuration might look like this:
+
+```py
+class ThermostatExecutor(BaseExecutor):
+  options_type = DictType({
+    'devices': ListType(DictType({
+      'id': IdentifierType(),
+      'label': Attribute(StrType(), optional=True),
+      'port': StrType()
+    }))
+  })
+
+  def __init__(self, conf, *, host):
+    super().__init__()
+
+    self.devices = dict()
+
+    for device_conf in conf['devices']:
+      device = ThermostatDevice(
+        id=device_conf['id'],
+        label=device_conf['label'],
+        port=device_conf['port']
+      )
+
+      self.devices[device.id] = device
+      host.devices[device.id] = device
+```
+
+The user can now define devices with the following:
+
+```yml
+units:
+  # ...
+  thermostat:
+    options:
+      devices:
+        - id: Themostat1
+          label: Thermostat 1
+          port: COM3
+        - id: Thermostat2
+          port: COM5
+  # ...
+```
+
+
+## Creating a readable node
+
+A minimal readable node implementation only needs to implement the abstract properties of the `BaseReadableNode` class.
+
+```py
+class TempSensor(BaseReadableNode[float]):
+  def __init__(self):
+    super().__init__()
+
+    self.connected = True
+    self.id = 'temp_sensor1'
+    self.label = 'Temperature sensor 1'
+
+    self.value = 37.5
+```
+
+In reality however, you might want to use a more complex class to inherit from, such as `ScalarReadableNode` since the temperature readout will be a scalar:
+
+```py
+from pr1 import ureg
+
+class TempSensor(BaseScalarNode):
+  def __init__(self):
+    super().__init__(unit=ureg.degC)
+
+    self.connected = True
+    self.id = 'temp_sensor1'
+    self.label = 'Temperature sensor 1'
+
+    self.value = 37.5 * ureg.degC
+```
+
+The unit is now explictly defined in Celsius degrees, and will be displayed accordingly in the interface, possibly in ºF if the user prefers. See [Defining quantities] for more information on unit management.
+
+Let's further improve the node to support watching the node over time, for example to record the node's value. There are two classes that implement this functionality:
+
+- `PolledReadableNode` – Used for nodes that cannot report changes to their value and are therefore polled regularly to detect changes.
+- `SubscribableReadableNode` – Used for nodes that can report changes to their value.
+
+We will implement a `PolledReadableNode` as this is the most common.
+
+```py
+class TempSensor(PolledReadableNode, ScalarReadableNode):
+  def __init__(self):
+    PolledReadableNode.__init__(min_interval=1.0)
+    ScalarReadableNode.__init__(unit=ureg.degC)
+
+    self.connected = True
+    self.id = 'temp_sensor1'
+    self.label = 'Temperature sensor 1'
+
+  # Abstract method of PolledReadableNode
+  def _read(self):
+    return 37.5 * ureg.degC
+```
+
+When the system wants to watch the node, `_read()` will be called regularly do detect changes. We set `min_interval=1.0` in the constructor to indicate that it is useless to poll the node more than once every second, as `_read()` would return the same value. In a real example, this value would depend on the device's specification and would be caused by a physical limit of the device.
+
+
+## Creating a writable node
+
+
+## Reading from a device
+
+A consumer unit can access any device through the same `Host.devices` dictionary used to create devices.
+
+```py
+sensor = host.devices['temp1']
 
 # Get the last known value.
 sensor.nodes[0].value
@@ -75,7 +216,11 @@ while True:
   print("New value", value)
 ```
 
-### Batch-reading from a device
+
+## Writing to a device
+
+
+## Batch-reading from a device (outdated)
 
 Multiple nodes can be read from the same device in a single call. Certain devices have optimization for batch-reading but others device will just read requested values individually.
 
@@ -92,3 +237,6 @@ The same is possible for listening to values.
 values = await sensor.listen(0b011001)
 # etc.
 ```
+
+
+## Handling device disconnection

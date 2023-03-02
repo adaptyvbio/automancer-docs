@@ -1,0 +1,47 @@
+import { Brand } from '../shared';
+
+export const title = 'Expect';
+
+
+# {title}
+
+Version: 1.0
+
+
+## Introduction
+
+This module allows you to ensure than an expression stays true overtime, and raise an error otherwise.
+
+
+## Usage
+
+This module can be used with the `expect:` state attribute. For example, to ensure that a given temperature sensor readout stays at more than 30ºC, use the following.
+
+```yml
+expect: %{{ devices.TempSensor.readout > 20.0 * unit.degC }}
+actions:
+  - ...
+  - ...
+```
+
+Multiple conditions and additional details can be given by providing a list.
+
+```yml
+expect:
+  - condition: %{{ devices.TempSensor1.readout > 20 * unit.degC }}
+    message: The temperature is too low!
+  - condition: %{{ devices.TempSensor2.readout < 30 * unit.degC }}
+    message: The temperature is too high!
+    type: warning
+```
+
+The following options are supported.
+
+- `condition` (runtime expression, required) – The condition to check.
+- `message` (string) – The message of the diagnostic to create if the condition expression evaluates to false.
+- `type` (one of `error` or `warning`) – The type of diagnostic. Defaults to `error`.
+
+
+## Notes
+
+214
