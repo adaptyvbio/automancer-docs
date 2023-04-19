@@ -13,7 +13,6 @@
   "devDependencies": {
     "@mdx-js/esbuild": "^2.1.2",
     "esbuild": "^0.17.0",
-    "highlight.js": "^11.6.0",
     "minimist": "^1.2.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

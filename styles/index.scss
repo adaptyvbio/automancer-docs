@@ -127,6 +127,10 @@ $aside-margin: 2rem;
   &-back {
     font-size: 0.9rem;
 
+    &:hover span {
+      text-decoration: underline;
+    }
+
     &::before {
       content: "← ";
     }

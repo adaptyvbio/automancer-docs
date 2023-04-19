@@ -29,7 +29,7 @@ export default (props) => {
       <body>
         <div id="root">
           <div class="title">
-            <div class="title-text">Documentation</div>
+            <div class="title-text">Automancer docs</div>
           </div>
           <div class="bar">
             <nav class="bar-current">
@@ -43,20 +43,24 @@ export default (props) => {
           <aside class="aside">
             {props.sectionEntry && (
               <div class="product">
-                <a href={props.siteUrl} class="product-back">Home</a>
+                <a href={props.siteUrl} class="product-back">
+                  <span>Home</span>
+                </a>
                 <a href={props.sectionEntry.outUrl} class="product-title">{props.sectionEntry.title}</a>
               </div>
             )}
             <nav class="list">
               <div class="item">
-                <div class="section">Expressions</div>
+                <div class="section">Topics</div>
                 <div class="list">
-                  {props.navigation.map(({ entry }) => (
-                    <div class={formatClass('item', { '_active': entry === props.entry })}>
-                      <a href={entry.outUrl} class="item-link">
-                        <div class="text">{entry.title}</div>
-                      </a>
-                    </div>
+                  {props.navigation
+                    .sort(({ entry: a }, { entry: b }) => a.title.localeCompare(b.title))
+                    .map(({ entry }) => (
+                      <div class={formatClass('item', { '_active': entry === props.entry })}>
+                        <a href={entry.outUrl} class="item-link">
+                          <div class="text">{entry.title}</div>
+                        </a>
+                      </div>
                   ))}
                 </div>
               </div>
