@@ -1,12 +1,9 @@
 import { Brand } from '../shared';
 
 export const title = 'Defining quantities';
-export const subtitle = 'Define quantities with a robust unit system to minimze errors.';
 
 
 # {title}
-
-<p className="lead">{subtitle}</p>
 
 
 ## General
@@ -26,7 +23,7 @@ Pint is quite flexible on how units are referenced: they can be in a abbreviated
 
 ## Defining quantities in expressions
 
-In [Expressions], units can be obtained using the global `unit` variable, such as `unit.sec` or `unit.second` for seconds. The unit can then be multiplied by a number to obtain a quantity, e.g. `5 * unit.sec` corresponds to 5 seconds. Multiplying two units or quantities together will lead to new units, as expected: `5 * unit.meter / unit.sec` corresponds to 5 m/s. The number multiplied by a unit can be arbitrarily complicated and can involve complex operations, such as `abs(math.cos(2 ** index)) * unit.sec`.
+When working with [expressions](../expressions), units can be obtained using the global `unit` variable, such as `unit.sec` or `unit.second` for seconds. The unit can then be multiplied by a number to obtain a quantity, e.g. `5 * unit.sec` corresponds to 5 seconds. Multiplying two units or quantities together will lead to new units, as expected: `5 * unit.meter / unit.sec` corresponds to 5 m/s. The number multiplied by a unit can involve complex operations, such as `abs(math.cos(2 ** index)) * unit.sec`.
 
 Any attribute expecting a quantity can have a value as both a quantity literal (e.g. `5 sec`) or an expression (e.g. `${{ 5 * unit.sec }}`).
 

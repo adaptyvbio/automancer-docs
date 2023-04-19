@@ -1,0 +1,76 @@
+import { Brand, LangBrand } from '../shared';
+
+export const title = 'Managing protocol state';
+
+
+# {title}
+
+
+## Enforcing state execution in overriden protocol fragments
+
+The default behavior when reaching a process is to apply its state before starting that process. In this example, both the thermostat and the controller will be informed of their respective values at the same time and will need to respond in order for the 10-minute timer to start.
+
+```yml
+protocol:
+  actions:
+    - wait: 10 min
+      Controller.pressure: 12 psi
+  Thermostat.temperature: 37 degC
+```
+
+However, in a situation where you need to enforce the order in which state is applied, you can do so by setting the `settle` attribute to `true`, which otherwise has the default value of `false`. This will cause {Brand} to wait for the parent state to _settle_ before continuing. Here, the controller will have to wait for the thermostat to respond before having its value set.
+
+```diff
+  protocol:
+    actions:
+      - wait: 10 min
+        Controller.pressure: 12 psi
+    Thermostat.temperature: 37 degC
++   settle: true
+```
+
+On the other hand, you can set `settle` to `false` on the state attached to the process, which has a default value of `true`. Compared to the starting example, the thermostat and controller will still both be called at the same time, but their response will not be required anymore before starting the timer. This has little effect when applying state is fast, as is often the case, but can have a greater impact when working with remote devices or devices that perform actions before reporting that they have settled.
+
+```diff
+  protocol:
+    actions:
+      - wait: 10 min
+        Controller.pressure: 12 psi
++       settle: false
+    Thermostat.temperature: 37 degC
+```
+
+Note that having `settle: true` in multiple locations can also have unexpected effects as the save device might be called multiple times with different values. Here, the pressure will be set first to 10 psi and then 12 psi, which might be undesirable.
+
+```yml
+protocol:
+  actions:
+    - wait: 10 min
+      Controller.pressure: 12 psi
+      # Here settle: true is the default
+  Controller.pressure: 10 psi
+  settle: true
+```
+
+
+## Customizing error recovery behavior by defining a stable state
+
+{Brand} puts great importance in having robust recovery. The default behavior is to pause the protocol in its root state, which is the only state known as _stable_ by default. To customize this behavior, set the `stable` attribute to `true` on one of the deeper states.
+
+```yml
+protocol:
+  actions:
+    - actions:
+        - wait: 10 min
+          Controller.presure: 14 psi
+      Controller.presure: 12 psi
+      stable: true
+  Controller.presure: 10 psi
+```
+
+When an error occurs, the protocol will pause but the pressure will now fall back to 12 psi rather than 10 psi. If multiple stable states are present, the one closest to the current process is the one the system will pause on.
+
+
+## Notes
+
+201, 221, 263

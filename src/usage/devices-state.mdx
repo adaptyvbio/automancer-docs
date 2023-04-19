@@ -1,0 +1,56 @@
+import { Brand, LangBrand } from '../shared';
+
+export const title = 'Defining state using devices';
+
+
+# {title}
+
+
+## Understanding device claims
+
+Every writable device node in the device has the ability to be _claimed_. Only one entity in {Brand} can claim a node at a time, and only the entity that claimed that node is allowed to write to it. Claims must be released as soon the entity owning the claim does not need that node anymore. There are different kind of claiming entities:
+
+- Protocol masters claim nodes when executing state that references these nodes. Therefore, two protocol masters cannot claim the same node at the same time, and one of them will fail executing its state.
+- The user claims nodes when using manual control, overriding any claim from other entities.
+- Certain claimable or non-claimable nodes can claim other nodes themselves. For example, a node which is an alias for another node will claim that node when receiving a claim request itself.
+
+The failure to claim a node or the loss of an existing claim will lead to an error or warning depending on the circumstances of that event. For example, the loss of a claim following a manual override from the user will cause a warning rather than an error.
+
+
+## Avoiding undefined behavior
+
+By default, when not explicitly mentioned, the state of a device is _undefined behavior_, meaning that there is no guarantee of its value.
+
+In this example, the temperature during the second step is undefined as there is no value attached to its process nor any default value in the parent blocks. This behavior is thus only suitable if you do not care about the thermostat's value in the second step. In practice, the thermostat's value will likely be kept at 12ºC as changing it would require a useless call to the device.
+
+```yml
+protocol:
+  actions:
+    - wait: 10 min
+      Thermostat.temperature: 12ºC
+    - wait: 10 min
+```
+
+The safest way to avoid this problem is to enforce default values on the root block of the protocol, as follows. The thermostat's value will now fall back to 10ºC during the second step.
+
+```diff
+  protocol:
+    actions:
+      - wait: 10 min
+        Thermostat.temperature: 12ºC
+      - wait: 10 min
++   Thermostat.temperature: 10ºC
+```
+
+
+## Disabling devices with null values
+
+Certain devices can be disabled when not in use by setting their value to null, or `nil` in {LangBrand}. Setting null to the root block is a good way of avoiding undefined behavior, as described in the previous section.
+
+```yml
+protocol:
+  wait: 10 min
+  Thermostat.temperature: nil
+```
+
+When working with expressions, use `None` instead of `nil`.

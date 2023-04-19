@@ -1,35 +1,50 @@
+import { Brand, LangBrand } from '../../shared';
+
 export const title = 'Managing setups';
 
 
-# Managing setups
+# {title}
 
 A _setup_, internally known as a _host_, is an object which defines a physical setup.
 
 
 ## Adding a setup
 
-Setups can be added by clicking **New setup** on the startup window.
+Setups can be added by clicking **New setup** on the launch window.
 
 Every setup depends on a Python binary, which can be the system's installation or an embedded binary. All Python packages present in this installation's import path will be searched for modules.
-
-If an error occurs during launch, an alert modal will be displayed. If the setup is local, the error will be printed to a log file. Log files can be found from the startup menu: **Right click on a setup → Reveal logs in explorer**.
 
 
 ## Installing modules
 
-Modules can be installed as any Python project, using `pip` or another package manager.
+Modules are installed by updating the `requirements.in` file in the setup's directory. The setup's directory can be found from the launch window: **Right click on a setup → Reveal settings in explorer → Open `requirements.in`**.
 
-```sh
-$ pip install pr1_ksp
-$ pip install path/to/module
+The `requirements.in` file can be opened with a text editor. Each line in this file maps to a Python package which can provide zero or more modules, although usually a single module.
+
+To add a package, just add a line with the corresponding package's name, as visible on PyPI or the official {Brand} package registry. You can optionally add a version number, for example `pr1-nikon-microscope~=4.2.0` to enforce version 4.2.X.
+
+```diff
+  --extra-index-url (...)
+
+  pip-tools~=6.13.0
+
+  pr1
+  pr1-server
+
+  # Only add packages below
+
+  pr1-amf
++ pr1-nikon-microscope
 ```
 
-Installed modules will be automatically loaded and enabled when the setup is launched. Note also that a project can contain multiple modules.
+Packages mentioned in this file will be installed when launching the setup, which can take a few minutes. Modules contained in the package will be automatically loaded and enabled shortly after.
+
+To remove a package, remove the corresponding line and restart the setup. To update a package, optionally update the provided version number and restart the setup. To install modules for development, see [Module development](../../../development).
 
 
 ## Configuring a setup
 
-When running a standalone application, the setup's configuration can be found from the startup menu: **Right click on a setup → Reveal settings in explorer → Open `setup.yml`**.
+A setup's configuration can be found from the launch window: **Right click on a setup → Reveal settings in explorer → Open `setup.yml`**. This file is written in {LangBrand}. For more information, see [Writing configuration](../../config-lang).
 
 The following root attributes are available:
 
@@ -45,7 +60,7 @@ The configuration of modules is provided in the setup configuration file as key-
 
 ```yml
 units:
-  ksp:
+  nikon_microscope:
     # <- Options regarding module initialization here
     options:
       # <- Options passed to the module here
@@ -62,7 +77,7 @@ The following options for module initialization are available:
 By default, all modules installed in `sys.path` are loaded and enabled even if they are not mentioned in the configuration.
 
 
-### Devices
+### Registering devices
 
 Several modules interact with external devices and follow a similar pattern when defining the configuration of these devices. This configuration starts with a `devices` attribute in the module options, which defines a list of devices. Each device can the following properties:
 
@@ -78,19 +93,24 @@ Below is an example:
 
 ```yml
 units:
-  ksp:
+  nikon_microscope:
     options:
       devices:
-        - id: RA1
-          label: Rocket alpha 1
-          model: alpha
-          address: LaunchingPads/1
+        - id: Microscope1
+          label: Microscope no. 1
+          model: NikonTi1
+          address: COM3
           # <- Other options here
-        - id: RA2
+        - id: Microscope2
           # ...
 ```
 
 
+## Troubleshooting launch errors
+
+All errors that occur during launch are printed to a log file, which can be found from the launch window: **Right click on a setup → Reveal logs in explorer**. The file with the largest number corresponds to the latest log.
+
+
 ## Notes
 
-55
+55, 283

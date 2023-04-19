@@ -1,0 +1,43 @@
+export const title = 'Understanding protocol structure';
+
+
+# {title}
+
+
+## Understanding block resolution order
+
+The block resolution order is not always obvious, especially when working with complex protocols. In general, the priority of the different modules follows the order below. The presence of another module can however influence that order.
+
+1. Outer
+1. Name
+1. Run before/after
+1. Record, expect
+1. Repeat
+1. Condition
+1. Device control
+1. Process-owning blocks such as timer, query and process-owning shorthands
+
+```yml
+protocol:
+  name: Hello
+  actions:
+    - wait: 10 min
+    - wait: 10 min
+  repeat: 2
+  if: %{{ ... }}
+  Thermostat.temperature: %{{ (index + 10.0) * unit.degC }}
+```
+
+
+## Customizing block resolution order
+
+The block resolution order can be customized with the `outer` attribute. This attribute moves its children blocks “outside” the current block, causing the inner blocks to be added later in the structure.
+
+In this example, the `outer` attribute causes the condition to be moved before the repeat. The condition's expression will thus only be executed once, and won't have access to the `index` variable (containing the iteration number) as the loop won't have started yet when the expression evaluates.
+
+```yml
+protocol:
+  repeat: 2
+  outer:
+    if: %{{ ... }}
+```
