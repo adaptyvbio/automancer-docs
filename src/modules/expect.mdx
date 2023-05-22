@@ -15,7 +15,7 @@ This module allows you to ensure than an expression stays true overtime, and rai
 
 ## Usage
 
-This module can be used with the `expect:` state attribute. For example, to ensure that a given temperature sensor readout stays at more than 30ºC, use the following.
+This module can be used with the `expect:` state attribute. For example, to ensure that a given temperature sensor readout stays at more than 30°C, use the following.
 
 ```yml
 expect: %{{ devices.TempSensor.readout > 20.0 * unit.degC }}

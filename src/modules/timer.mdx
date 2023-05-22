@@ -3,8 +3,6 @@ export const title = 'Timer';
 
 # Timer
 
-Version: 1.0
-
 
 ## Introduction
 
@@ -22,7 +20,14 @@ actions:
   - wait: ${{ 1.0 * unit.hr + 5.0 * unit.min }}
 ```
 
-The resolution and latency of the timer depend on the Python implementation and platform, as well as the behavior of other modules running in parallel. In practice, the timer will unlikely be more accurate than 100 ms and provide such a low value will produce a warning. Furthermore, it possible that the timer finish before the provided duration if that difference is within the system clock resolution. A warning will be produced if the observed delay is significantly different compared to the provided value.
+The resolution and latency of the timer depend on the Python implementation and platform, as well as the behavior of other modules running in parallel. In practice, the timer will unlikely be more accurate than 100 ms and providing such a low value will produce a warning. Furthermore, it possible that the timer will finish before the provided duration if that difference is within the system clock resolution. A warning will be produced if the observed delay is significantly different than the provided value.
+
+The special keyword `forever` can be used to create a timer that never finishes.
+
+```yml
+actions:
+  - wait: forever
+```
 
 
 ## Notes

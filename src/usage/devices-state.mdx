@@ -21,25 +21,25 @@ The failure to claim a node or the loss of an existing claim will lead to an err
 
 By default, when not explicitly mentioned, the state of a device is _undefined behavior_, meaning that there is no guarantee of its value.
 
-In this example, the temperature during the second step is undefined as there is no value attached to its process nor any default value in the parent blocks. This behavior is thus only suitable if you do not care about the thermostat's value in the second step. In practice, the thermostat's value will likely be kept at 12ºC as changing it would require a useless call to the device.
+In this example, the temperature during the second step is undefined as there is no value attached to its process nor any default value in the parent blocks. This behavior is thus only suitable if you do not care about the thermostat's value in the second step. In practice, the thermostat's value will likely be kept at 12°C as changing it would require a useless call to the device.
 
 ```yml
 protocol:
   actions:
     - wait: 10 min
-      Thermostat.temperature: 12ºC
+      Thermostat.temperature: 12°C
     - wait: 10 min
 ```
 
-The safest way to avoid this problem is to enforce default values on the root block of the protocol, as follows. The thermostat's value will now fall back to 10ºC during the second step.
+The safest way to avoid this problem is to enforce default values on the root block of the protocol, as follows. The thermostat's value will now fall back to 10°C during the second step.
 
 ```diff
   protocol:
     actions:
       - wait: 10 min
-        Thermostat.temperature: 12ºC
+        Thermostat.temperature: 12°C
       - wait: 10 min
-+   Thermostat.temperature: 10ºC
++   Thermostat.temperature: 10°C
 ```
 
 

@@ -1,33 +1,60 @@
 import { Brand } from '../shared';
 
-export const title = 'OPC-UA server';
+export const title = 'OPC-UA client';
 
 
-# OPC-UA server
-
-Version: 1.0
+# OPC-UA client
 
 
 ## Introduction
 
-This module adds partial support for servers implementing the [OPC-UA protocol](https://opcfoundation.org/about/opc-technologies/opc-ua/) using [opcua-asyncio](https://github.com/FreeOpcUa/opcua-asyncio).
+This module adds partial support for servers implementing the [OPC-UA protocol](https://opcfoundation.org/about/opc-technologies/opc-ua/). It is using [opcua-asyncio](https://github.com/FreeOpcUa/opcua-asyncio).
 
 
 ## Usage
 
 Each device configured generates a node for each entry in the `nodes` list, which can then be used by any node consumer.
 
+```yml
+# Example setting a node's value
+
+PLC.FR_setpoint: 8 µl/min
+actions:
+  - ...
+  - ...
+
+
+# Example setting something else using a node's value
+
+Something_else: {{ math.cos(PLC.FR_readout) }}
+```
+
 
 ## Device configuration
 
-This module follows the standard definition of devices.  In addition to the standard properties of a device, it requires the following.
+This module follows the standard definition of devices.  In addition to the standard properties of a device, it requires the following. We distinguish between _physical nodes_ which are those defined by the OPC-UA standard, and _virtual nodes_ which are those used in {Brand}. The configuration must match that of the OPC-UA server, otherwise the incorrectly-configured nodes will be marked as disconnected.
 
 - `address` (string, required) – The address of the device, such as `opc.tcp://192.168.0.23:4840/a/b`.
-- `nodes` (required) – A list that maps physical (i.e. OPC-UA) nodes to virtual (i.e. {Brand}) nodes, with the following properties:
+- `nodes` (required) – A list that maps physical nodes to virtual nodes, with the following properties:
+  - `description` (string) – A description of the virtual node.
+  - `label` (string) – A label for the virtual node.
   - `id` (identifier, required) – The id of the virtual node.
   - `location` (string, required) – The location of the physical node, such as `ns=3;i=2` or `ns=3;s="Foo bar".S02`.
+  - `max`/`min` (quantity) – The maximum/minimum value of the virtual node, which must not exceed the acceptable range of the physical node. These are used for user input validation as well as display purposes. The unit must correspond to the `unit` attribute, if any. Only applies to writable nodes.
+  - `unit` (quantity) – The unit of the virtual node, such as `ml/min`. When adding a magnitude to the unit, the virtual node's value is be scaled accordingly with respect to the physical node's value. A unit of `3 ml/min` means that a value of `1.0` returned by the OPC-UA server corresponds to `3 ml/min`.
   - `type` (string, required) – The type of the physical node, and thus of the virtual node. The following values are supported:
-    - `bool` – A boolean value.
+    - `bool` – Corresponds to OPC-UA's `Boolean` type.
+    - `i16` – `Int16`
+    - `i32` – `Int32`
+    - `i64` – `Int64`
+    - `u16` – `UInt16`
+    - `u32` – `UInt32`
+    - `u64` – `UInt64`
+    - `f32` – `Float`
+    - `f64` – `Double`
+  - `stable` (boolean) – Whether the node is stable, meaning it's value never changes between two writes performed by this module. If an entity other than {Brand} has control over the physical node, then it should be considered unstable for the module to regularly check that the written value is still active. Only applies to writable nodes. Defaults to `true`.
+  - `writable` (boolean) – Whether the virtual node is writable, which is only possible if the physical node is writable. This attribute may be set to `false` even if the physical node is writable to use it in read-only mode. Defaults to `false`.
+
 
 An example is shown below.
 
@@ -36,13 +63,17 @@ devices:
   - id: PLC
     address: opc.tcp://192.168.0.23:4840/a/b
     nodes:
-      - id: S00
+      - id: FR_readout
+        label: Flowrate readout
         location: ns=3;i=2
         type: bool
-      - id: S01
+        unit: 0.01 µl/min
+      - id: FR_setpoint
+        label: Flowrate setpoint
         location: ns=3;i=3
-        type: bool
-      - id: S02
-        location: ns=3;i=4
-        type: bool
+        max: 10 µl/min
+        min: 0 µl/min
+        type: f32
+        unit: 0.01 µl/min
+        writable: true
 ```

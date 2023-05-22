@@ -8,51 +8,61 @@ export const title = 'Devices';
 
 ## Introduction
 
-To add new devices, it is recommended to use the devices API provided by {Brand}. This API let's you add new devices with minimal effort while providing many related features out of the box, such as:
+To add support for new devices, using the devices API let's you add new devices with minimal effort, while providing many related features out of the box:
 
 - When writing to devices
   - Writing to devices using the protocol syntax
-  - Manual controlling the device from the UI
-  - Batch-writing to devices
+  - Manually controlling the device from the UI
   - Locking devices to prevent them from being written elsewhere
-  - Handling situations when the device is disconnected
+  - Correctly handling device disconnection
 - When reading device readouts
   - Recording data over time
+  - Using a value in an expression
   - Ensuring a condition stays true over time
+  - Displaying values in a plot in the UI
 
-Furthermore, the use of a common API makes it possible for units to build upon each other. For instance, in the case of a USB device, three units could work together:
+Furthermore, the use of a common API makes it possible for plugins to build upon each other. For instance, in the case of a USB device, three plugins could work together:
 
-1. a low-level unit communicates to the USB driver and provides a low-level interface in the form of binary I/O;
-2. a mid-level unit elevates the low-level interface to a higher level in the form of high-level commands;
-3. a high-level unit provides tools to simplify working with this interface, for example by grouping such commands.
+1. a low-level plugin communicates to the USB driver and provides a low-level interface in the form of binary I/O;
+2. a mid-level plugin elevates the low-level interface to a higher level in the form of high-level commands;
+3. a high-level plugin provides tools to simplify working with this interface, for example by grouping such commands.
 
 In this context, a device is not necessarily a physical device connected to the computer. It could also be a remotely controlled device, or just a virtual object which is convenient to consider a device.
 
 
-## Architecture
+## Understanding the device architecture
 
-The architecture of the devices API is based on a tree. The root node can be accessed as `Host.root_node` and the leaves represent values which can be read or written. Non-leaf nodes are all instances of `CollectionNode`, that is, they are collections of nodes.
+All devices and their associated values are stored in a tree made of _nodes_. The root node can be accessed as `Host.root_node` and the leaves represent values which can be read or written. Intermediate (non-leaf) nodes are all instances of `CollectionNode` and serve as collections of other nodes.
 
-In most cases, the subtree used when adding a new device is straightforward and can be defined as a `DeviceNode` with multiple custom children nodes, which are subclasses of either `BaseReadableNode` or `BaseWritableNode`. The following example represents the tree for a thermostat:
+In most cases, the subtree used when adding a new device is straightforward and can be defined as a `DeviceNode` with multiple custom children nodes, which are subclasses of `ValueNode`. The following example represents the tree for a thermostat:
 
 ```
-Root (HostRootNode)
+Root (HostRootNode <- CollectionName)
 ├── ...
-└── MyThermostat (ThermostatDevice <- DeviceNode)
-    ├── readout (ThermostatReadout <- ScalarReadableNode)
-    └── setpoint (ThermostatSetpoint <- ConfigurableWritableNode, ScalarWritableNode)
+└── MyThermostat (ThermostatDevice <- DeviceNode <- CollectionNode)
+    ├── readout (ThermostatReadout <- NumericNode, ValueNode)
+    └── setpoint (ThermostatSetpoint <- NumericNode, ValueNode)
 ```
 
-The leftmost name on each line represents the identifier of the node, a value which must be unique among all nodes with the same parent node. The identifier of device nodes usually starts with a capital letter. Here, the name `MyThermostat` is chosen by the user whereas `readout` and `setpoint` are fixed nodes of all `ThermostatDevice` instances. The user can reference the values of the device as `MyThermostat.readout` and `MyThermostat.setpoint`.
+The leftmost name on each line represents the identifier of the node, a value which must be unique among all nodes of a collection node. The identifier of device nodes usually starts with a capital letter. Here, the name `MyThermostat` is chosen by the user whereas `readout` and `setpoint` are fixed nodes of all `ThermostatDevice` instances. The user can reference the values of the device as `MyThermostat.readout` and `MyThermostat.setpoint`. Strings inside the parentheses indicate the subclasses of each node.
 
-The `ConfigurableWritableNode` class used to create `ThermostatSetpoint` is a subclass of `ScalarWritableNode` capable of having both a known value and a target value. These can differ if the device is disconnected: in that situation, the target value might be updated but will only be written to the device once it gets reconnected. The known value represents the last value written to the device.
+The full tree is visible in the logs when starting the host. If the user defines two thermostats in the configuration, then two instances of `ThermostatDevice` will be created, each with their own subtree.
 
-The full tree is visible in the logs when starting the host.
+```
+Root
+├── ...
+├── Thermostat1
+│   ├── readout
+│   └── setpoint
+└── Thermostat2
+    ├── readout
+    └── setpoint
+```
 
 
-## Creating a device
+## Creating a device node
 
-A device node is a instance of a subclass of `DeviceNode`.
+A device node is defined by creating a subclass of `DeviceNode`. Start with the following example:
 
 ```py
 class ThermostatDevice(DeviceNode):
@@ -60,17 +70,18 @@ class ThermostatDevice(DeviceNode):
     super().__init__()
 
     self.connected = True
-    self.id = "<an id chosen by the user>"
-    self.label = "<a label chosen by the user>"
-
-    self.model = "Temperature sensor device 2000"
-    self.owner = "<namespace of the unit>"
+    self.id = "Thermostat"
+    self.label = "Thermostat 2000"
 
     # Dictionary of children nodes
-    self.nodes = dict()
+    self.nodes = {
+      # To be added later
+      # 'readout': ThermostatReadout(...),
+      # 'setpoint': ThermostatSetpoint(...)
+    }
 ```
 
-Devices should be registered on the `Host.devices` dictionary (an alias for `Host.root_node.nodes`) using their identifier. Because devices are created and registered once and only during host initialization, this must happen when the creating and initializaing the unit's executor.
+Devices should be registered on the `Host.devices` dictionary (an alias for `Host.root_node.nodes`) using their identifier. Because devices are created and registered once and only during host initialization, this must happen in the plugin's executor.
 
 ```py
 class ThermostatExecutor(BaseExecutor):
@@ -79,12 +90,11 @@ class ThermostatExecutor(BaseExecutor):
 
     self.device = ThermostatDevice()
     host.devices[self.device.id] = self.device
-
-  async def initialize(self):
-    # Perform any asynchronous work here to initialize the device
 ```
 
-This hardcoded example works well for a simple scenario, but it is not suitable to the complex setup a user might be working with. It is best to let the user choose how many devices to create, and the identifier, name, and address (e.g. COM port or IP address) of each device. A more complete example using the unit's configuration might look like this:
+After reloading the setup, the device should now show up in the **Device control** view.
+
+This hardcoded example works well for a simple scenario, but it is not suitable to the complex setup a user might be working with. It is best to let the user choose how many devices to create, and the identifier, name, and port (e.g. COM port or IP address) of each device. A more complete example using the plugin's configuration might look like this:
 
 ```py
 class ThermostatExecutor(BaseExecutor):
@@ -98,7 +108,6 @@ class ThermostatExecutor(BaseExecutor):
 
   def __init__(self, conf, *, host):
     super().__init__()
-
     self.devices = dict()
 
     for device_conf in conf['devices']:
@@ -115,7 +124,7 @@ class ThermostatExecutor(BaseExecutor):
 The user can now define devices with the following:
 
 ```yml
-units:
+plugins:
   # ...
   thermostat:
     options:
@@ -126,6 +135,131 @@ units:
         - id: Thermostat2
           port: COM5
   # ...
+```
+
+
+## Writing device connection logic
+
+A node is _connected_ if it is available for normal operation, such as reading and writing. A disconnected node being accessed typically produces an error. In the example above, we set `self.connected = True` to simulate a device which is always connected. This is usually accurate for virtual devices, such as a node reporting time according to the system's clock, but not for physical devices like our thermostat.
+
+To link the `ThermostatDevice` class to a physical device, we will need to write the connection logic in a new asynchronous method which will call `start()`. As an example, let's consider the thermostat's to be a serial (RS-232) device and use the [pySerial](https://github.com/pyserial/pyserial) package for communication, but the API is otherwise agnostic to the underlying technology.
+
+```py
+class ThermostatDevice(BaseDevice):
+  def __init__(self):
+    ...
+
+    self.connected = False
+
+  async def start(self):
+    try:
+      self.serial = Serial(self.port, baudrate=9600, timeout=1)
+      self.serial.write(b"CONNECT\r\n")
+      response = self.serial.read_until(b"\n").decode()
+
+      if response != "OK":
+        print("Failed to connect")
+        return
+    except SerialException as e:
+      print("Failed to connect")
+      return
+
+    self.connected = True
+```
+
+We first instantiate a serial communication with `Serial(...)` and make a connection attempt by writing the `CONNECT` command. The device should respond with `OK` if the connection was successful. If the device does not respond, or responds with something else, we consider the connection to have failed. If the connection was successful, we set `self.connected = True` to indicate that the device is ready for normal operation.
+
+There are two problems with this function. First, the calls to `self.serial.write()` and `self.serial.read_until()` are blocking, which means that the host will be unresponsive until the device responds. To prevent this, we can wrap these calls with [`asyncio.to_thread()`](https://docs.python.org/3/library/asyncio-task.html) to run them on another thread. This is not required if the library you are relying on already provides an asynchronous API.
+
+```diff
+  class ThermostatDevice(BaseDevice):
+    ...
+
+    async def start(self):
+      try:
+        self.serial = Serial(self.port, baudrate=9600, timeout=1)
+-       self.serial.write(b"CONNECT\r\n")
+-       response = self.serial.read_until(b"\n").decode()
++       await asyncio.to_thread(lambda: self.serial.write(b"CONNECT\r\n"))
++       response = await asyncio.to_thread(lambda: self.serial.read_until(b"\n")).decode()
+
+        if response != "OK":
+          print("Failed to connect")
+          return
+      except SerialException as e:
+        print("Failed to connect")
+        return
+
+      self.connected = True
+```
+
+Second, the function doesn't handle reconnection: if the device gets disconnected, it will not be able to reconnect without restarting the setup. To fix this, we can add a loop which will attempt to reconnect every second until the connection is successful. To make sure that the connection is still active, we can make a dummy request to a device every second while the device is connected.
+
+```py
+class ThermostatDevice(BaseDevice):
+  ...
+
+  async def start(self):
+    while True:
+      try:
+        self.serial = Serial(self.port, baudrate=9600, timeout=1)
+        await asyncio.to_thread(lambda: self.serial.write(b"CONNECT\r\n"))
+        response = await asyncio.to_thread(lambda: self.serial.read_until(b"\n")).decode()
+
+        if response != "OK":
+          print("Failed to connect")
+          await asyncio.sleep(1)
+          continue
+
+        self.connected = True
+
+        try:
+          while True:
+            # Make a dummy request to make sure that the connection is still active
+            await asyncio.to_thread(lambda: self.serial.write(b"REQUEST\r\n"))
+            await asyncio.to_thread(lambda: self.serial.read_until(b"\n")
+            await asyncio.sleep(1)
+        finally:
+          self.connected = False
+      except SerialException as e:
+        print("Failed to connect")
+        await asyncio.sleep(1)
+```
+
+The `start()` method now runs in a infinite loop for the entire lifecycle of the device. To stop the loop, we will cancel the task running the method. In practice, this means that one of the `asyncio.to_thread()` or `asyncio.sleep()` calls will get cancelled, we must therefore plan any cleanup procedure accordingly. For this example, there is no cleanup required assuming we can reconnect to the device after disconnection. For details, see [Task Cancellation](https://docs.python.org/3/library/asyncio-task.html#task-cancellation).
+
+The only step left is to call `start()` for each device from the executor. Executors have their own `start()` method which is called by the host, from which we will start the devices.
+
+```py
+class ThermostatExecutor(BaseExecutor):
+  def __init__(self, conf, *, host):
+    super().__init__()
+    self.devices = dict()
+
+    for device_conf in conf['devices']:
+      ...
+
+      self.devices[device.id] = ThermostatDevice(...)
+
+  async def start(self):
+    async with Pool.open() as pool:
+      for node in self.devices.values():
+        pool.start_soon(node.start())
+
+      yield
+```
+
+We use the `Pool.open()` function to handle tasks created by the executor. For details on this pattern, see [...].
+
+Futhermore, the `yield` statement at the end of `start()` is required to indicate that the executor is ready. It is possible to run initialization steps before yielding, if required.
+
+
+## Designing a value node
+
+Now that we have set up the device, we can start designing the value nodes which contain the device's data.
+
+```py
+
 ```
 
 
@@ -152,7 +286,7 @@ from pr1 import ureg
 
 class TempSensor(BaseScalarNode):
   def __init__(self):
-    super().__init__(unit=ureg.degC)
+    super().__init__(plugin=ureg.degC)
 
     self.connected = True
     self.id = 'temp_sensor1'
@@ -161,7 +295,7 @@ class TempSensor(BaseScalarNode):
     self.value = 37.5 * ureg.degC
 ```
 
-The unit is now explictly defined in Celsius degrees, and will be displayed accordingly in the interface, possibly in ºF if the user prefers. See [Defining quantities] for more information on unit management.
+The plugin is now explictly defined in Celsius degrees, and will be displayed accordingly in the interface, possibly in °F if the user prefers. See [Defining quantities] for more information on plugin management.
 
 Let's further improve the node to support watching the node over time, for example to record the node's value. There are two classes that implement this functionality:
 
@@ -174,7 +308,7 @@ We will implement a `PolledReadableNode` as this is the most common.
 class TempSensor(PolledReadableNode, ScalarReadableNode):
   def __init__(self):
     PolledReadableNode.__init__(min_interval=1.0)
-    ScalarReadableNode.__init__(unit=ureg.degC)
+    ScalarReadableNode.__init__(plugin=ureg.degC)
 
     self.connected = True
     self.id = 'temp_sensor1'
@@ -193,7 +327,7 @@ When the system wants to watch the node, `_read()` will be called regularly do d
 
 ## Reading from a device
 
-A consumer unit can access any device through the same `Host.devices` dictionary used to create devices.
+A consumer plugin can access any device through the same `Host.devices` dictionary used to create devices.
 
 ```py
 sensor = host.devices['temp1']
@@ -237,6 +371,3 @@ The same is possible for listening to values.
 values = await sensor.listen(0b011001)
 # etc.
 ```
-
-
-## Handling device disconnection
