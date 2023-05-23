@@ -8,26 +8,23 @@ export const title = 'Defining quantities';
 
 ## General
 
-Quantities are ubiquitous in {Brand}. Unit management in {Brand} is powered by [Pint](https://pint.readthedocs.io/en/0.20.1/index.html).
+Quantities are ubiquitous in {Brand}. Unit management in {Brand} is powered by [Quantops](https://slietar.github.com/quantops).
 
+Quantops is flexible on how units are referenced: they can be in a abbreviated (e.g. `s`) or longer form (e.g. `sec` or `second`), singular or plural (e.g. `seconds`). Prefixes from the SI system can also be used, such as `MHz` for megahertz. For details, see [Pint's docs](https://pint.readthedocs.io/en/0.20.1/user/defining-quantities.html) and [its default definition file](https://github.com/hgrecco/pint/blob/master/pint/default_en.txt).
 
-Pint is quite flexible on how units are referenced: they can be in a abbreviated form (e.g. `s`) or longer form (e.g. `sec` or `second`), singular or plural (e.g. `seconds`). Prefixes from the SI system can also be used, such as `MHz` for megahertz. For details, see [Pint's docs](https://pint.readthedocs.io/en/0.20.1/user/defining-quantities.html) and [its default definition file](https://github.com/hgrecco/pint/blob/master/pint/default_en.txt).
-
-| Quantity | Example units |
-|-|-|
-| time (T) | `s`, `sec`, `second`, `seconds`; `min`, `minute`, `minutes`; etc. |
-| frequency (T<sup>-1</sup>) | `Hz`, `hertz`, `1 / second`, `s**-1` |
-| temperature (Θ) | `celsius`, `degC`, `degreeC`; `K`, `kelvin`; etc. |
-| flowrate (L<sup>3</sup>T<sup>-1</sup>) | `m**3 / second`, `µl/s` |
+| Quantity                               | Example units                                                     |
+|----------------------------------------|-------------------------------------------------------------------|
+| time (T)                               | `s`, `sec`, `second`, `seconds`; `min`, `minute`, `minutes`; etc. |
+| frequency (T<sup>-1</sup>)             | `Hz`, `hertz`, `1 / second`, `s**-1`                              |
+| temperature (Θ)                        | `celsius`, `degC`, `degreeC`; `K`, `kelvin`; etc.                 |
+| flowrate (L<sup>3</sup>T<sup>-1</sup>) | `m**3 / second`, `µl/s`                                           |
 
 
 ## Defining quantities in expressions
 
-When working with [expressions](../expressions), units can be obtained using the global `unit` variable, such as `unit.sec` or `unit.second` for seconds. The unit can then be multiplied by a number to obtain a quantity, e.g. `5 * unit.sec` corresponds to 5 seconds. Multiplying two units or quantities together will lead to new units, as expected: `5 * unit.meter / unit.sec` corresponds to 5 m/s. The number multiplied by a unit can involve complex operations, such as `abs(math.cos(2 ** index)) * unit.sec`.
+When working with [expressions](../expressions), units can be obtained using the global `unit` variable, such as `unit.sec` or `unit.second` for seconds. The unit can then be multiplied by a number to obtain a quantity, e.g. `5 * unit.sec` corresponds to 5 seconds. Multiplying two units or quantities together will produce a new unit or quantity with that new unit, as expected: `5 * unit.meter / unit.sec` corresponds to 5 m/s. The same result is obtained when maniuplating units first and then creating a quantity, such as `5 * (unit.meter / unit.sec)`. The number multiplied by a unit can involve complex operations, such as `abs(math.cos(2 ** index)) * unit.sec`.
 
-Any attribute expecting a quantity can have a value as both a quantity literal (e.g. `5 sec`) or an expression (e.g. `${{ 5 * unit.sec }}`).
-
-When receiving a quantity, its unit and magnitude can be retrieved with its attributes `units` (`u` for short) and `magnitude` (`m` for short) respectively.
+Any attribute expecting a quantity can have a value as both a quantity literal (e.g. `5 sec`) or an expression (e.g. `{{ 5 * unit.sec }}`).
 
 
 ## Using inverse units

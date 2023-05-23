@@ -1,0 +1,133 @@
+{/* Category: Conceptual guide */}
+
+
+import { Brand } from '../shared';
+
+export const title = 'Using asynchronous patterns';
+
+
+# {title}
+
+## Introduction
+
+{Brand} is fully built using [`asyncio`](https://docs.python.org/3/library/asyncio.html) and therefore runs on a single thread (except for blocking tasks). For that reason, it is important to understand how to use asynchronous patterns to prevent plugins from blocking the event loop while providing robust error handling and graceful termination.
+
+
+## Pools
+
+### Introduction
+
+_Pools_ are one of the main pattern employed by {Brand}. A pool is a set of tasks with the following principles:
+
+- If a task of the pool raises an exception, then all other tasks are cancelled. When all tasks finish, the pool raises an exception or [exception group](https://peps.python.org/pep-0654/) with the exceptions caught from the tasks that failed.
+- The pool closes when all of its tasks finish. Because a task may add another task in the pool before finishing, the pool may stay open for long after the first task finishes.
+- The pool must be awaited in order for its errors to be reported.
+- When cancelled, the pool cancels each one of its tasks.
+
+To create a task from an asynchronous function, use the `Pool.open()` asynchronous context manager.
+
+```py
+async def sleep(delay):
+  await asyncio.sleep(delay)
+  print("Done sleeping")
+
+async def main():
+  async with Pool.open() as pool:
+    pool.start_soon(func(1))
+    pool.start_soon(func(2))
+
+asyncio.run(main())
+```
+
+The pool contained three tasks:
+
+1. The task that called `main()`, which was “taken” and then “given back” by the pool rather than created. This task has special properties.
+1. The task created from `func(1)`.
+1. The task created from `func(2)`.
+
+The call to `Pool.open()` waited for all three tasks to finish before continuing. If an exception had been raised by any of these three tasks, then the other two would have been cancelled and `Pool.open()` would have re-raised the correponsing exception.
+
+### Debugging
+
+The hierarchy of pools and tasks can be displayed using `pool.format()`, along with traceback information. Unlike regular calls to `asyncio.create_tasks()`, calls to `pool.start_soon()` are tracked and displayed in the output.
+
+```py
+pool.format()
+// TODO: Put output example
+```
+
+For easier debugging, pools and tasks can be named:
+
+```py
+async with Pool.open("Main pool of plugin") as pool:
+  pool.start_soon(housekeep(), name="Housekeeping task")
+```
+
+### Starting tasks from other tasks
+
+To start a task from another task, one solution is to pass the pool object as an argument to a synchronous or asynchronous function.
+
+```py
+async def foo(pool):
+  pool.start_soon(...)
+
+def bar(pool):
+  pool.start_soon(...)
+
+async with Pool.open() as pool:
+  pool.start_soon(foo(pool))
+  bar(pool)
+```
+
+Another option is to call `Pool.current_pool()` to obtain the current pool, which is useful for deeply-nested functions.
+
+```py
+async def foo():
+  Pool.current_pool().start_soon(...)
+
+def bar():
+  Pool.current_pool().start_soon(...)
+```
+
+### Transcending task
+
+The task that called `Pool.open()` is called the _transcending task_. It is special because it is not created by the pool, but rather “taken” from the parent pool.
+
+
+## Initialization pattern
+
+Several functions in {Brand} are asynchronous functions that must run for a significant amount of time but must first report quickly to indicate that they are ready. To achieve this, such functions should yield once to indicate that they are ready:
+
+```py
+async def background_func():
+  await perform_initialization()
+
+  # Yield to indicate the function is ready
+  yield
+
+  try:
+    await perform_background_work()
+  finally:
+    await perform_cleanup()
+```
+
+A simple example of this pattern would be an HTTP server: the server first starts, then yields, and then starts listening for incoming connections. To close the server, the task is cancelled and the server can be gracefully closed.
+
+The `pool.wait_until_ready()` integrates a consumer of this pattern, with correct error handling and task cancellation:
+
+```py
+async with Pool.open() as pool:
+  await pool.wait_until_ready(background_func())
+```
+
+Multiple tasks can be awaited at the same time, and the initialization status can also be propagated to the caller:
+
+```py
+async with Pool.open() as pool:
+  await asyncio.gather(
+    pool.wait_until_ready(background_func1()),
+    pool.wait_until_ready(background_func2())
+  )
+
+  yield
+```

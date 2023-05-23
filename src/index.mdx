@@ -7,15 +7,17 @@ export const title = 'Home';
 
 {Brand} is a software application which makes it possible to automate lab protocols.
 
+{Brand} is written in Python 3.11 for the backend and TypeScript 5.0 for the frontend.
+
 
 ## Features
 
-- Optional graphical user interface – The application can be fully controlled from a graphical user interface.
-- Ease of use – Protocols are defined in a Yaml-like language which can be learned in less than an hour.
-- Modular design – Support for a new device in your setup can be added by simply installing a Python package. If no corresponding package is available, you can develop yours and have it seamlessly integrate with the user interface.
-- Reliability and reproducibility – {Brand} has support for error recovery, real-time notifications and log recording, which can be used to determine where an experiment went wrong.
-- Remote connection – Experiments can be controlled remotely, either through the graphical user interface or with a JSON-over-TCP endpoint.
-- Platform support – Linux, macOS, Windows
+- **Optional graphical user interface** – The application can be fully controlled from a graphical user interface. For more complex workflows, it is also possible to create a custom frontend by interfacing with {Brand}'s backend.
+- **Ease of use** – Protocols are defined in a YAML-like language called {LangBrand} which can be learned in less than an hour.
+- **Modular design** – Support for a new device in a setup can be added by installing a Python package. If no corresponding package is available, it is possible to create one and have it seamlessly integrate with the user interface with limited effort.
+- **Reliability and reproducibility** – {Brand} has support for error recovery, real-time notifications and log recording, which can be used to determine where an experiment went wrong.
+- **Remote connection** – Experiments can be controlled remotely, either through the graphical user interface or with a TCP socket. The connection is secured using TLS.
+- **Platform support** – Linux, macOS, Windows
 
 
 ## Downloads

@@ -1,0 +1,53 @@
+{/* Category: Tutorial */}
+
+
+import { Brand, LangBrand } from '../shared';
+
+export const title = `Getting started with ${Brand}`;
+
+
+# {title}
+
+
+## Install Python
+
+{Brand} requires Python 3.11 or later to function.
+
+- On Windows, install Python using [the official installer](https://www.python.org/downloads/).
+- On macOS, the recommended way is using Homebrew. First [install Homebrew](https://brew.sh/) and the run `brew install python` in the **Terminal** application. It is also possible to use the official installer.
+
+
+## Install {Brand}
+
+If you haven't already, [download the application](../..) from the homepage for your platform.
+
+Then, depending on your operating system:
+
+- On Windows, open the installer and wait for it to finish. The application should open at the end of the installation, which may be very quick depending on your computer.
+- On macOS, unarchive the .zip file and drag the application to the Applications folder. Then open the application from there. It is likely that an error message will appear, saying that the application is from an unidentified developer. In that case, open the **System Preferences**/**System Settings**, go to **Security & Privacy**, and click on **Open Anyway**.
+
+
+## Create a setup
+
+Now that you have installed {Brand}, you will need to create a first setup to experiment.
+
+1. Press **New setup** in the launch window to begin.
+1. Select **Advanced configuration** and continue. The "Simple configuration" is not yet implemented.
+1. Enter a setup name and make sure the **Create a virtual environment** option is checked. Keep the Python installation to its default, unless you know what you are doing. Press continue.
+1. This latest core packages required for {Brand} to function are now being installed. After a few seconds or up to a few minutes, the setup should be ready. Press **Launch** to continue.
+
+
+## Explore the application
+
+There are four main sections in the application, which can be accessed using the icons in the sidebar, on the left:
+
+1. The first section, which opens when launching the app, is the _Experiment List_. This section displays all current and past experiments. By clicking on an experiment, you can see its progress (if is is currently running) or its results (if it is finished).
+1. The second section is the _Protocol Editor_. This section displays all files that have registered as protocols. By clicking on a protocol, the editor will open and you will be able to edit, preview and eventually execute the protocol.
+1. The third section is the _Settings_. This section allows you to configure the application, the setup and its plugins.
+1. The fourth section is the _Device Control Panel_. This section provides easy access to all connected devices. By clicking on a device, you can see whether it is connected and what its current status is. You will also be able to manually control any device.
+1. More sections can be added by installing plugins. In fact, the Device Control Panel is generated from a plugin itself.
+
+
+## Next steps
+
+You can now start using {Brand}! To start writing protocols, see [Getting started writing protocols](../getting-started-protocols).
