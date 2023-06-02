@@ -27,8 +27,8 @@ Here is a list of the various extension points that a plugin can or should imple
   - `metadata` (required) – An instance of `automancer.Metadata` which provides information about the plugin.
   - `namespace` (required) – The plugin's name.
 - **Frontend** (only required if `client_path` is provided by the backend)
-  - `blocks` (optional) – A map of block name to block implementations, used to render custom blocks in protocols (such as repeat block or a process).
-  - `persistentStoreDefaults`/sessionStoreDefaults` (optional) – A map of default values for the plugin's persistent/session storage. The session storage is erased when closing the application, unlike the persistent storage.
+  - `blocks` (optional) – An object mapping block name to block implementations, used to render custom blocks in protocols (such as a repeat block or a process).
+  - `persistentStoreDefaults`/`sessionStoreDefaults` (optional) – A map of default values for the plugin's persistent/session storage. The session storage is erased when closing the application, unlike the persistent storage.
   - `SettingsComponent` (optional) – A React component to be displayed in the settings view.
   - `namespace` – The plugin's name.
   - `styleSheets` (optional) – An array of [`CSSStyleSheet` objects](https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleSheet) to be loaded with the plugin. A common way of providing such objects is by using [CSS Module Scripts](https://web.dev/css-module-scripts/).
