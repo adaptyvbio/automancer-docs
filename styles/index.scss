@@ -1,4 +1,5 @@
 @use "./modulebanner";
+@use "./page-previews";
 @use "./reset";
 @use "./mixins" as *;
 
@@ -32,7 +33,7 @@ code {
 
 $aside-margin: 2rem;
 
-.title {
+.sitetitle {
   & {
     display: flex;
     align-items: center;
@@ -84,6 +85,10 @@ $aside-margin: 2rem;
           height: 2.6rem;
 
           background-color: #f6f8fa;
+
+          &:hover {
+            background-color: darken(#f6f8fa, 2%);
+          }
 
           .text {
             margin: auto 0;

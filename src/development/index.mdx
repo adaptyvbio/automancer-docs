@@ -1,12 +1,33 @@
-import { Brand } from '../shared';
+import { Brand, PagePreviews } from '../shared';
 
-export const title = 'Module development';
+export const title = 'Plugin development';
 
 
 # {title}
 
 
-## Getting started with the simple template
+Articles in this category will teach you how to develop plugins for {Brand}.
+
+<PagePreviews pages={[
+  { title: 'Using asynchronous patterns',
+    description: 'Learn common patterns used to compose asynchronous code.',
+    url: './async-patterns' },
+  { title: 'Working with data objects',
+    description: 'Learn how to work with readable and writable data objects provided by the user.',
+    url: './data-objects' },
+  { title: 'Implementing input validation and transformation',
+    description: 'Learn how to validate and transform user input.',
+    url: './input-validation' },
+  { title: 'Tutorial – Add support for new devices',
+    description: 'Add support for any custom devices using a simplified API.',
+    url: './devices' },
+  { title: 'Developing plugins',
+    description: 'Understand what a plugin is and how to develop one.',
+    url: './plugins' }
+]} />
+
+
+{/* ## Getting started with the simple template
 
 The easiest way to get started is by copying the template unit provided in the {Brand} code repository, in the `units/template` repository. You can start by replacing all instances of `simple` with the name of your unit.
 
@@ -30,4 +51,4 @@ Unlike the unit above, this template includes npm scripts to preprocess source c
 
 This configuration requires Node.js to run appropriate preprocessors.
 
-The provided npm scripts ensure that the generated files will be at the correct location for the Python package to function. They can be triggered by running `npm run build` after installing dependencies with `npm install`, in the `client` directory.
+The provided npm scripts ensure that the generated files will be at the correct location for the Python package to function. They can be triggered by running `npm run build` after installing dependencies with `npm install`, in the `client` directory. */}

@@ -1,0 +1,39 @@
+.page-previews {
+  display: flex;
+  flex-direction: column;
+  row-gap: 1rem;
+
+  margin: 2rem 0;
+
+  .item {
+    display: grid;
+    grid-template: auto auto / 20px 1fr;
+    gap: 0 0.8ch;
+
+    &:active, &:focus-visible {
+      outline: 2px solid #0074d966;
+      outline-offset: 2px;
+    }
+  }
+
+  .icon, .title {
+    color: #0074d9;
+  }
+
+  .title {
+    font-weight: 500;
+  }
+
+  .item:hover .title {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .icon {
+
+  }
+
+  .description {
+    grid-column: 2;
+  }
+}

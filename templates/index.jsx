@@ -28,8 +28,8 @@ export default (props) => {
       </head>
       <body>
         <div id="root">
-          <div class="title">
-            <div class="title-text">Automancer docs</div>
+          <div class="sitetitle">
+            <div class="sitetitle-text">Automancer docs</div>
           </div>
           <div class="bar">
             <nav class="bar-current">

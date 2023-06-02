@@ -1,1 +1,32 @@
-export const title = 'Modules';
+import { Brand, PagePreviews } from '../shared';
+
+export const title = 'Plugins';
+
+
+# Plugins
+
+This category lists all plugins part of the core {Brand} project.
+
+<PagePreviews pages={[
+  { title: 'AWS S3 upload',
+    description: 'Upload files to an AWS S3 bucket.',
+    url: './s3' },
+  { title: 'OPC-UA client',
+    description: 'Control remote devices using the OPC-UA protocol.',
+    url: './opcua' },
+  { title: 'Record',
+    description: 'Record experiment data and store it safely for later use.',
+    url: './record' },
+  { title: 'Sequence',
+    description: 'Run multiple steps in a sequential order.',
+    url: './sequence' },
+  { title: 'Run command',
+    description: 'Execute commands on the host machine.',
+    url: './run' },
+  { title: 'Timer',
+    description: 'Wait for fixed durations before continuing.',
+    url: './timer' },
+  { title: 'Expect',
+    description: 'Ensure that a condition stays true during certain steps.',
+    url: './expect' }
+]} />

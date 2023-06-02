@@ -1,4 +1,4 @@
-import { Brand, LangBrand } from './shared';
+import { Brand, LangBrand, PagePreviews } from './shared';
 
 export const title = 'Home';
 
@@ -26,6 +26,21 @@ export const title = 'Home';
 - [Windows 10/11](https://scheduler-app-builds.s3.eu-central-1.amazonaws.com/windows/Automancer-4.0.0+Setup.exe)
 
 
-## Getting started
+## Contents
 
 Start by following the [Getting started guide](./usage/getting-started).
+
+<PagePreviews pages={[
+  { type: 'category',
+    title: 'Plugin development',
+    description: `Learn how to create plugins for ${Brand}.`,
+    url: './development' },
+  { type: 'category',
+    title: 'Plugins',
+    description: 'Browse available plugins and their documentation.',
+    url: './modules' },
+  { type: 'category',
+    title: 'Usage',
+    description: `Learn how to use ${Brand}.`,
+    url: './usage' }
+]} />
