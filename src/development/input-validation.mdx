@@ -1,0 +1,110 @@
+{/* Category: Conceptual guide */}
+
+
+import { Brand } from '../shared';
+
+export const title = 'Input validation';
+
+
+# Implementing input validation and transformation
+
+
+## Introduction
+
+{Brand} places a strong emphasis on input validation, and in particular on performing validation as soon as possible. Its robust validation system is designed to catch as many errors as soon as possible, even when the input is a dynamic expression that cannot be evaluated until runtime. Input validation also provides advanced language features which improve user experience in the editor.
+
+Plugins can integrate with the validation and transformation system to bring all of these features to new processes and programs. This guide will cover the basics of this topic.
+
+
+## Working with types
+
+All objects that define a type must have an `analyze()` method with the following signature:
+
+```py
+from types import EllipsisType
+import automancer as am
+import snaptext
+
+class SomeType:
+  def analyze(self, obj: snaptext.LocatedValue, /, context: am.AnalysisContext) -> tuple[am.DiagnosticAnalysis, Any | EllipsisType]:
+    ...
+```
+
+For convenience, this signature is replicated in the `Type` protocol.
+
+Two parameters are passed to this method:
+
+- `obj` is the object to test again. It is a `LocatedValue` object, which is a wrapper around the value that also contains information about where the value comes from.
+- `context` contains information about the requested analysis.
+
+The return value is a tuple containing two elements:
+
+- The `DiagnosticAnalysis` instance contains errors and warnings. If it is instead a `LanguageServiceAnalysis`, a subclass of `DiagnosticAnalysis`, it can also carry details required to implement certain language features, such as completion, hover and fold ranges.
+- The second element is the transformed object, or `EllipsisType` if the analysis failed.
+
+The success of the analysis is determined only by the second element of the tuple, and not by the presence of errors or warnings in the `LanguageServiceAnalysis` instance. The analysis may be successful even if there are errors or warnings.
+
+To create `Ellipsis` instance or check whether a value is an `Ellipsis` instance, use the following:
+
+```py
+from types import EllipsisType
+
+x = Ellipsis
+x = ...
+
+success = not isinstance(x, EllipsisType)
+success = x is not Ellipsis # Also works but not detected by type checkers
+```
+
+
+## Using built-in types
+
+Built-in types should cover most use cases. They are:
+
+- `AnyType` – Any value.
+- `RecordType` – A dictionary with a fixed set of string keys, with values of different types.
+- `ListType` – A list of values of the same type.
+- `StrType` – A string.
+- `IntType` – An integer. Accepts either an `int` or a string parseable as an integer. Produces an `int` instance.
+- `QuantityType` – A quantity with a magnitude and a unit. Accepts either a string parseable as a quantity, an integer or float assumed to be dimensionless, or a Quantops `Quantity` instance. Produces a `Quantity` instance.
+- `KVDictType` – A dictionary with keys of the same type and values of the same type.
+- `ReadableDataRefType` – A reference to a readable data source, in binary or text mode. Accepts one of the following:
+  - `os.PathLike` (including `pathlib.Path`) or `str` – A path to a file. Produces a `PathFileRef` instance.
+  - `bytes` – Binary data (only in binary mode). Produces a `BytesIOFileRef` instance.
+  - `io.IOBase` – A file-like object, such as one returned by `open()`. Produces an `IOBaseFileRef` instance.
+
+  Produces a subclass of `FileRef`. See [Working with data objects](../data-objects) for details.
+
+
+## Creating record types
+
+The record type is an ubiquitous type that represents a dictionary with a fixed set of string keys, with values of different types. It is used to represent configuration, protocols, and other data structures.
+
+The values of the record can either be types themselves or `Attribute` instances. The latter is used to provide additional information about the attribute, such as a description or a label. These are visible in the editor during completion and when hovering over the attribute.
+
+The following example shows a possible record type definition for a plugin that implements uploading data to an FTP server:
+
+```py
+am.RecordType({
+  'address': am.Attribute(
+    am.StrType(),
+    description="The address of the FTP server",
+    label="Address"
+  ),
+  'destination': am.StrType(),
+  'source': am.Attribute(
+    am.ReadableDataRefType(),
+    description="The source object to upload",
+    label="Source object"
+  )
+})
+```
+
+In a protocol, the type could be used to validate the following:
+
+```yml
+ftp-upload:
+  address: ftp.example.com
+  destination: path/to/destination.txt
+  source: path/to/source.txt
+```
