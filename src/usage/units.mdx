@@ -8,21 +8,21 @@ export const title = 'Defining quantities';
 
 ## General
 
-Quantities are ubiquitous in {Brand}. Unit management in {Brand} is powered by [Quantops](https://slietar.github.com/quantops).
+Quantities are ubiquitous in {Brand} and are managed by [Quantops](https://github.com/slietar/quantops).
 
-Quantops is flexible on how units are referenced: they can be in a abbreviated (e.g. `s`) or longer form (e.g. `sec` or `second`), singular or plural (e.g. `seconds`). Prefixes from the SI system can also be used, such as `MHz` for megahertz. For details, see [Pint's docs](https://pint.readthedocs.io/en/0.20.1/user/defining-quantities.html) and [its default definition file](https://github.com/hgrecco/pint/blob/master/pint/default_en.txt).
+Quantops is flexible on how units are referenced: they can be in a abbreviated (e.g. `s`) or longer form (e.g. `sec` or `second`), singular or plural (e.g. `seconds`). Prefixes from the SI system can also be used, such as `MHz` for megahertz.
 
 | Quantity                               | Example units                                                     |
 |----------------------------------------|-------------------------------------------------------------------|
 | time (T)                               | `s`, `sec`, `second`, `seconds`; `min`, `minute`, `minutes`; etc. |
 | frequency (T<sup>-1</sup>)             | `Hz`, `hertz`, `1 / second`, `s**-1`                              |
-| temperature (Θ)                        | `celsius`, `degC`, `degreeC`; `K`, `kelvin`; etc.                 |
-| flowrate (L<sup>3</sup>T<sup>-1</sup>) | `m**3 / second`, `µl/s`                                           |
+| temperature (Θ)                        | `degC`; `degF`; `K`, `kelvin`                                     |
+| flowrate (L<sup>3</sup>T<sup>-1</sup>) | `m**3 / second`, `µl/s`, `ul/s`                                   |
 
 
 ## Defining quantities in expressions
 
-When working with [expressions](../expressions), units can be obtained using the global `unit` variable, such as `unit.sec` or `unit.second` for seconds. The unit can then be multiplied by a number to obtain a quantity, e.g. `5 * unit.sec` corresponds to 5 seconds. Multiplying two units or quantities together will produce a new unit or quantity with that new unit, as expected: `5 * unit.meter / unit.sec` corresponds to 5 m/s. The same result is obtained when maniuplating units first and then creating a quantity, such as `5 * (unit.meter / unit.sec)`. The number multiplied by a unit can involve complex operations, such as `abs(math.cos(2 ** index)) * unit.sec`.
+When working with [expressions](../expressions), units can be obtained using the global `unit` variable, such as `unit.sec` or `unit.second` for seconds. The unit can then be multiplied by a number to obtain a quantity, e.g. `5 * unit.sec` corresponds to 5 seconds. Multiplying two units or quantities together will produce a new unit or quantity with that new unit, as expected: `5 * unit.meter / unit.sec` corresponds to 5 m/s. The same result is obtained when manipulating units first and then creating a quantity, such as `5 * (unit.meter / unit.sec)`. The number multiplied by a unit can involve complex operations, such as `abs(math.cos(2 ** index)) * unit.sec`.
 
 Any attribute expecting a quantity can have a value as both a quantity literal (e.g. `5 sec`) or an expression (e.g. `{{ 5 * unit.sec }}`).
 
@@ -37,6 +37,72 @@ frequency: 50 ms
 ```
 
 
-## Notes
+## Providing unit contexts
 
-53, 94
+Certain configuration schemas or APIs require a _unit context_. A unit context describes how to display a quantity with a given dimensionality as rendering quantities with SI units is not always the most convenient option. For example, it is common to display DNA concentration in µg/ml rather than kg/m<sup>3</sup>, and certain pressure in psi rather than pascals. The prefixes used are also specified by the unit context, for instance to display MB/s or MiB/s for a data rate depending on the context. Lastly, a context can define different rules depending on the locale, for example by using °C or °F when dealing with temperatures.
+
+The following contexts are available out of the box. The ~ symbol indicates that prefixes may be prepended to the adjacent unit. Prefixes that are technically correct but not used in practice (such as megagrams) are never used.
+
+| Dimension                   | SI unit                   | Context name                   | Units                     |
+|-----------------------------|---------------------------|--------------------------------|---------------------------|
+| **None**                    |                           | `dimensionless`                |                           |
+|                             |                           | `percent`                      | %                         |
+| **Absement**                | m&middot;s                | `absement`                     | ~m&middot;s               |
+| **Acceleration**            | m/s<sup>2</sup>           | `acceleration`                 | ~m/s<sup>2</sup>          |
+| **Angle**                   | rad                       | `angle`                        | rad                       |
+|                             |                           | `angle:deg`                    | °                         |
+| **Angular acceleration**    | rad/s<sup>2</sup>         | `angular_acceleration`         | rad/s<sup>2</sup>         |
+| **Angular jerk**            | rad/s<sup>3</sup>         | `angular_jerk`                 | rad/s<sup>3</sup>         |
+| **Angular velocity**        | rad/s                     | `angular_velocity`             | rad/s                     |
+| **Area**                    | m<sup>2</sup>             | `area`                         | ~m<sup>2</sup>            |
+| **Data rate**               | &ndash;                   | `data_rate`                    | ~B/s                      |
+| **Density**                 | kg/m<sup>3</sup>          | `density`                      | ~kg/m<sup>3</sup>         |
+| **Electric charge**         | C                         | `electric_charge`              | ~C                        |
+| **Electric current**        | A                         | `electric_current`             | ~A                        |
+| **Energy**                  | J                         | `energy`                       | ~J                        |
+|                             |                           | `energy:cal`                   | ~cal                      |
+|                             |                           | `energy:kcal`                  | kcal                      |
+|                             |                           | `energy:ev`                    | ~eV                       |
+|                             |                           | `energy:watt`                  | ~W*h                      |
+| **Flowrate**                | m<sup>3</sup>/s           | `flowrate`                     | m<sup>3</sup>/s           |
+|                             |                           | `flowrate:l_min`               | ~l/min                    |
+| **Force**                   | N                         | `newton`                       | ~N                        |
+|                             |                           | `newton:daN`                   | daN                       |
+| **Frequency**               | Hz                        | `frequency`                    | ~Hz                       |
+|                             | Bq                        | `activity`                     | ~Bq                       |
+| **Illuminance**             | lx                        | `illuminance`                  | lx                        |
+| **Jerk**                    | m/s<sup>3</sup>           | `jerk`                         | ~m/s<sup>3</sup>          |
+| **Kinematic viscosity**     | m<sup>2</sup>/s           | `kinematic_viscosity`          | ~Pa&middot;s              |
+| **Length**                  | m                         | `length`                       | ~m, ly                    |
+|                             |                           | `length:atomic`                | Å                         |
+| **Level**                   | dB                        | `level`                        | dB                        |
+| **Luminance**               | cd/m<sup>2</sup>          | `luminance`                    | cd/m<sup>2</sup>          |
+| **Luminous efficacy**       | lm/W                      | `luminous_efficacy`            | lm/W                      |
+| **Luminous energy density** | lm&middot;s/m<sup>3</sup> | `luminous_energy_density`      | lm&middot;s/m<sup>3</sup> |
+| **Luminous energy**         | lm&middot;s               | `luminous_energy`              | lm&middot;s               |
+| **Luminous exitance**       | lm/m<sup>2</sup>          | `luminous_exitance`            | lm/m<sup>2</sup>          |
+| **Luminous exposure**       | lx&middot;s               | `luminous_exposure`            | lx&middot;s               |
+| **Luminous flux**           | lm                        | `luminous_flux`                | lm                        |
+| **Luminous intensity**      | cd                        | `luminous_intensity`           | cd                        |
+| **Mass concentration**      | kg/m<sup>3</sup>          | `dna_concentration`            | ng/µl                     |
+|                             |                           | `mass_concentration`           | ~g/l                      |
+| **Mass flow rate**          | kg/s                      | `mass_flow_rate`               | kg/s                      |
+| **Mass**                    | kg                        | `mass`                         | ~g, ton                   |
+| **Memory**                  | &ndash;                   | `memory`                       | ~B                        |
+| **Molar concentration**     | mol/m<sup>3</sup>         | `molar_concentration`          | M                         |
+|                             |                           | `molar_concentration:explicit` | ~mol/l                    |
+| **Moment of inertia**       | kg&middot;m<sup>2</sup>   | `moment_of_inertia`            | kg&middot;m<sup>2</sup>   |
+| **Momentum**                | kg&middot;m/s             | `momentum`                     | kg&middot;m/s             |
+| **Power**                   | W                         | `power`                        | ~W                        |
+|                             |                           | `power:hp`                     | hp                        |
+| **Pressure**                | Pa                        | `pressure`                     | ~Pa                       |
+|                             |                           | `pressure:psi`                 | ~psi                      |
+| **Radiance**                | W/sr/m<sup>2</sup>        | `radiance`                     | W/sr/m<sup>2</sup>        |
+| **Solid angle**             | sr                        | `solid_angle`                  | sr                        |
+| **Temperature**             | K                         | `temperature`                  | °C                        |
+|                             |                           | `temperature:K`                | ~K                        |
+| **Time**                    | s                         | `time`                         | s, min, hr, day, year     |
+| **Velocity**                |                           | `velocity:car`                 | km/hr                     |
+|                             |                           | `velocity`                     | ~m/s                      |
+| **Volume**                  | m<sup>3</sup>             | `volume`                       | ~m<sup>3</sup>            |
+|                             |                           | `volume:l`                     | l                         |

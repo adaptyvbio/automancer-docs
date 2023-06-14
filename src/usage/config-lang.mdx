@@ -1,3 +1,6 @@
+{/* Category: Conceptual guide */}
+
+
 import { Brand, LangBrand } from '../shared';
 
 export const title = 'Writing configuration';
@@ -8,10 +11,7 @@ export const title = 'Writing configuration';
 
 ## Introduction
 
-{Brand} heavily relies on a configuration language named {LangBrand} in the following files:
-
-- The configuration file of setups, i.e. `setup.pcrl`
-- Protocol files
+{Brand} protocols are defined in {LangBrand}, a configuration language close to YAML. It is designed to be lightweight and human-readable. It is also used in setup configuration files.
 
 The extension of {LangBrand} is `.pcrl` and its media (MIME) type is `text/pcrl`. The recommended case is snake case, i.e. `snake_case`.
 
@@ -21,20 +21,19 @@ The extension of {LangBrand} is `.pcrl` and its media (MIME) type is `text/pcrl`
 The following {LangBrand}:
 
 ```yml
+# A comment
+
 database:
   server: 192.168.1.1
-  ports:
-    - 8000
-    - 8001
-    - 8002
+  ports: [8000, 8001, 8002]
   connection_max: 5000
-  enabled: true
+  options: { enabled: true }
 
 servers:
-  alpha:
+  - name: alpha
     ip: 10.0.0.1
     dc: eqdc10
-  beta:
+  - name: beta
     ip: 10.0.0.2
     dc: eqdc10
 ```
@@ -45,24 +44,26 @@ Maps to the following JSON:
 {
   "database": {
     "server": "192.168.1.1",
-    "ports": ["8000", "8001", "8002"],
-    "connection_max": "5000",
-    "enabled": "true"
+    "ports": [8000, 8001, 8002],
+    "connection_max": 5000,
+    "options": {
+      "enabled": true
+    }
   },
-  "servers": {
-    "alpha": {
+  "servers": [
+    {
+      "name": "alpha",
       "ip": "10.0.1",
       "dc": "eqdc10"
     },
-    "beta": {
+    {
+      "name": "beta",
       "ip": "10.0.2",
       "dc": "eqdc10"
     }
-  }
+  ]
 }
 ```
-
-Note in particular how all values with a type other than string are considered to be strings. They must be converted to their appropriate type by the downstream consumer.
 
 
 ## Comparison with YAML
@@ -71,14 +72,18 @@ Note in particular how all values with a type other than string are considered t
 
 - Values in {LangBrand} are either a dictionary, a list, a string or null.
   ```yml
-  foo:       # foo is None
-  foo: 32    # foo is "32"
-  foo: false # foo is "false"
+  foo: null  # foo is None
+  foo: 32    # foo is 32
+  foo: false # foo is false
   ```
-- {LangBrand} has no support for dictionaries of dictionaries on a single line.
+- {LangBrand} has no support for nested dictionaries on a single line.
   ```yml
   foo:
     bar: 23
+
+  # or
+
+  foo: { bar: 23 }
 
   # instead of
 
@@ -88,16 +93,16 @@ Note in particular how all values with a type other than string are considered t
 - {LangBrand} has no support for anchors and references.
 - {LangBrand} has no support for data typing.
 - {LangBrand} has no support for multiple documents.
-- The {LangBrand} syntax for multiline strings requires a vertical bar on every line:
+- {LangBrand} only has the `|` syntax for multiline strings but no support for `>`.
   ```yml
-  key:
-    | Not like the brazen giant of Greek fame,
-    | With conquering limbs astride from land to land;
-    | ...
+  key: |
+    Not like the brazen giant of Greek fame,
+    With conquering limbs astride from land to land;
+    ...
 
   # instead of
 
-  key: | # or >
+  key: >
     Not like the brazen giant of Greek fame,
     With conquering limbs astride from land to land;
     ...

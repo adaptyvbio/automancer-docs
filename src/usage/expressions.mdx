@@ -1,36 +1,97 @@
+{/* Category: Conceptual guide */}
+
+
+import { Brand, LangBrand } from '../shared';
+
 export const title = 'Using expressions';
 
 
 # {title}
 
 
-## General
+## Introduction
 
-_Expressions_ are small Python expressions that can be used in various locations in a protocol.
+_Expressions_ are small Python snippets that can be used in various locations in a protocol. They make it possible to record data, wait for a condition to be met, or perform a computation.
+
+Expressions can be used in {LangBrand} by wrapping a Python snippet with the `{{ ... }}` syntax, such as `{{ 2 + 3 }}`. They can be employed in most places where a value is expected.
 
 
-## Using static expressions
+## Mixing values from different phases
 
-_Static expressions_ are executed at compile-time, in other words every time a protocol is compiled, even when not executed.
+Expressions are compiled and evaluated gradually such that any part of an expression containing a value available at compile-time will be evaluated at compile-time, while the rest will be evaluated at runtime.
+
+There four different phases at which data can be acquired:
+
+1. During the _parsing phase_, only operations between constants or literals are evaluated.
+2. During the _adoption phase_, shorthand arguments from the previous and current phase are resolved.
+3. During the _runtime phase_, variables that do not depend on external data are evaluated.
+4. During the _query phase_, all remaining variables are evaluated.
+
+An example for each phase is shown below:
 
 ```yml
-wait: ${{ 5 * unit.sec }}
+wait: {{ (3 + 7) * unit.sec }}
+wait: {{ arg * unit.sec }}
+wait: {{ index * unit.sec }}
+wait: {{ devices.Foo.bar * unit.sec }}
+```
+
+When adding these, the resulting expression is still evaluated gradually in order to catch errors as soon as possible while providing robust type checking.
+
+```yml
+wait: {{ (3 + 7 + arg + index + devices.Foo.bar) * unit.sec }}
+```
+
+The compilation algorithm also prevents unnecessary data fetching when upstream control flow excludes a part of the expression in a previous phase. Here, only one of `Foo1` or `Foo2` will be queried depending on the value of `index` which was obtained in the previous phase.
+
+```yml
+wait: {{ devices.Foo1.bar if index > 2 else devices.Foo2.bar }}
+```
+
+The fourth phase may be executed every time corresponding variables change if the expression's consumer supports it, making the expression ‘reactive’. This is not supported by the timer process, but is crucial to the `expect` block which is re-evaluated as often as necessary.
+
+```yml
+expect: {{ devices.Foo.bar > 3 }}
 ```
 
 
-## Using dynamic expressions
+## Manipulating dynamic expressions
 
-Unlike static expressions, _dynamic expressions_ are executed at runtime.
+The behavior of dynamic expressions can be manipulated using _expression directives_. Directives rely on a non-standard syntax and must be used carefully as they can have unintended consequences.
 
-Dynamic expressions can contain compile-time components to guarantee the validity of parts of the expression earlier on. This is achieved with the `static()` function; its argument will be evaluated at compile-time and used at runtime. For example, the expression `${{ static(time()) - time() }}` will return the number of seconds from compilation to execution.
+- Changing an expression's dynamism
+  - Enforced frequency – `freq[<value>, <frequency>]`
+  - Enforced static – `static[<value>]`
+  - Hysteresis – `hyst[<value>, <high>, <low>]`
+- Asserting an expression's final phase
+  - Compile-time – `comptime[<value>]`
+  - Runtime – `runtime[<value>]`
 
-Certain dynamic expressions are executed once, whereas others are executed as frequently as possible.
+The `freq` directive allows an expression to be re-evaluated at a given frequency. It is particularly useful when combined with the `time()` function as it allows time to be obtained dynamically. For example, to simulate waiting for 5 seconds:
 
 ```yml
-steps:
-  - wait: %{{ 5 * unit.min }} # Executed once
-    expect: %{{ devices.Foo.bar > 36.0 }} # Executed every time variable 'Foo.bar' changes
+until: {{ freq[time(), 100 * ureg.ms] > time() + 5 * ureg.s }}
 ```
+
+The right hand-side of the comparison is only evaluated once, while the left-hand side is evaluated every 100 ms.
+
+Assertions are another type of directive that help ensure that an expression will have evaluated by the end of a given phase. They do not have any impact on the protocol itself, but can be used to catch errors early on.
+
+```yml
+# Error, 'index' is only available in the runtime phase
+wait: {{ comptime[index * 2 * ureg.sec] }}
+
+# Ok
+wait: {{ index * comptime[2 * ureg.sec] }}
+```
+
+
+## Understanding expression pitfalls
+
+While expressions are very powerful, they have several downsides that users need to keep in mind:
+
+- Expressions prevent certain errors from being caught at compile-time. Despite expressions are type-checked by {Brand}, certain errors, such as a out-of-bounds value, cannot be detected before being evaluated. It is therefore important to keep a minimal number of expressions and test them thoroughly.
+- Expressions that rely on external variables can have a significant delay. Many devices report data with a delay from a few milliseconds to a few seconds, which can impact any action taken from that data. Furthermore, performing computations by calling `time()` will report a value which doesn't match the time at which the data was obtained, leading to possible bugs.
 
 
 ## Using binding expressions
@@ -51,7 +112,7 @@ There are five binding expression types:
 - _Named bindings_ write the received value to a variable and are written in the form `${{ <var> }}`, e.g. `${{ foo }}`.
 - _Attribute bindings_ write the value to an attribute and are written in the form `${{ <expr>.<attr> }}`, e.g. `${{ foo.bar }}`. The attribute will be set using `setattr()`.
 - _Property bindings_ write the value to a property and are written in the form `${{ <expr>[<expr>] }}`, e.g. `${{ foo['bar'] }}` or `${{ foo[5] }}`.
-- _Null bindings_ discard the value and are written as `${{ _ }}`. They are variant of named bindings where the variable's name is `_`. Unlike regular Python, the data will be actually discarded rather than set to this variable.
+- _Null bindings_ discard the value and are written as `${{ _ }}`. They are variant of named bindings where the variable's name is `_`. Unlike regular Python, the data will be actually discarded rather than set to the `_` variable.
 - _Tuple bindings_ are a special type of binding used to match a tuple. They are composed of zero or more children bindings which will be matched to their corresponding sub-values. In the expression `@{{ x, y.a, _ }}`, the first and second items of the tuple will be set to `x` and `y.a`, respectively a named and an attribute binding. The third item will be discarded. An empty tuple `${{ () }}` is also valid when receiving an empty tuple.
 
 List bindings are not supported.
@@ -67,25 +128,31 @@ All expressions are dynamic, thus executed at runtime. Static components can sti
 For details on how to consume bindings, see [...].
 
 
+## Using mixed expressions
+
+A mixed expression associates a regular expression with a binding expression. They are common in loops where the list to loop over is provided on the regular expression and the iteration variable is provided on the binding expression. All mixed expressions contain a root logical or operation `|` which separates the two expressions.
+
+```yml
+loop: {{ item | some_list }}
+loop: {{ index, item | enumerate(some_list) }}
+repeat: {{ index | 6 }}
+```
+
+
 ## Using global variables
 
 Expressions have access to all variables returned by `globals()`, as well as a few additional ones, detailed in this table.
 
-| Name             | Environment | Type                     | Static | Dynamic | Untrusted | Description                                                                                 |
-|------------------|-------------|--------------------------|:------:|:-------:|:---------:|---------------------------------------------------------------------------------------------|
-| `time`           | System      | `() -> float`            |   ⚠    |    ✔    |     ✔     | Alias for `time.time`                                                                       |
-| `env`            | System      | dictionary               |   ✔    |    ✔    |           | Alias for `os.environ`                                                                      |
-| `Path`           | System      | `type`                   |   ✔    |    ✔    |     ✔     | Alias for `pathlib.Path`                                                                    |
-| `ExperimentPath` | System      | `type`                   |   ✔    |         |     ✔     | Opaque variant of `pathlib.Path` where the starting directory is the experiment's directory |
-| `ExperimentPath` | System      | `type`                   |        |    ✔    |           | Sub-class of `pathlib.Path` where the starting directory is the experiment's directory      |
-| `warn`           | System      | `(message: str) -> None` |        |    ✔    |           | Function which emits a warning when called                                                  |
-| `devices`        | Devices     | –                        |        |    ✔    |           | See [Devices]                                                                               |
-| `parent`         | n/a         | –                        |   ✔    |    ✔    |           | Global object of the parent block                                                           |
-| `unit`           | System      | `pint.UnitRegistry`      |   ✔    |    ✔    |           | Unit registry instance, see [Units]                                                         |
+| Name             | Environment | Type                    | Phase | Untrusted | Description                                                                                                                                   |
+|------------------|-------------|-------------------------|:-----:|:---------:|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| `devices`        | Devices     | –                       |       |           | See [Devices]                                                                                                                                 |
+| `env`            | System      | `dict[str, str]`        |   1   |           | Alias for [`os.environ`](https://docs.python.org/3/library/os.html#environ).                                                                  |
+| `ExperimentPath` | System      | `type`                  |   3   |     ✔     | Opaque variant of [`pathlib.Path`](https://docs.python.org/3/library/pathlib.html) where the current directory is the experiment's directory. |
+| `math`           | System      | `module`                |   1   |           | Alias for [`math`](https://docs.python.org/3/library/math.html).                                                                              |
+| `open`           | System      | `(str, int) -> IO`      |   3   |           | Variant of [`open()`](https://docs.python.org/3/library/functions.html#open) where the current directory is the experiment's directory.       |
+| `Path`           | System      | `type`                  |   3   |     ✔     | Alias for [`pathlib.Path`](https://docs.python.org/3/library/pathlib.html).                                                                   |
+| `time`           | System      | `() -> float`           |   3   |     ✔     | Alias for [`time.time`](https://docs.python.org/3/library/time.html#time.time). Not a dynamic value.                                          |
+| `unit`           | System      | `quantops.UnitRegistry` |   1   |           | Unit registry instance, see [Defining quantities](../units).                                                                                  |
+| `username`       | System      | `str`                   |   1   |           | The user's name.                                                                                                                              |
 
-> ⚠ – Available, however a warning will be issued.
-
-
-## Notes
-
-73, 166, 175, 192, 253
+Note that when working with paths, evaluation may not finish before the runtime phase as the experiment's directory is not known before that phase.
