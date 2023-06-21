@@ -1,3 +1,6 @@
+{/* Category: Tutorial */}
+
+
 export const title = 'Devices';
 
 
@@ -34,7 +37,7 @@ All devices and their associated values are stored in a tree made of _nodes_. Th
 
 In most cases, the subtree used when adding a new device is straightforward and can be defined as a `DeviceNode` with multiple custom children nodes, which are subclasses of `ValueNode`. The following example represents the tree for a thermostat:
 
-```
+```text
 Root (HostRootNode <- CollectionName)
 ├── ...
 └── MyThermostat (ThermostatDevice <- DeviceNode <- CollectionNode)
@@ -46,7 +49,7 @@ The leftmost name on each line represents the identifier of the node, a value wh
 
 The full tree is visible in the logs when starting the host. If the user defines two thermostats in the configuration, then two instances of `ThermostatDevice` will be created, each with their own subtree.
 
-```
+```text
 Root
 ├── ...
 ├── Thermostat1
