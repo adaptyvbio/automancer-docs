@@ -11,6 +11,7 @@ jobs:
           node-version: 18
       - run: npm install
       - run: npm run build
+      - run: echo "automancer.adaptyvbio.com" > dist/CNAME
       - uses: actions/upload-pages-artifact@main
         with:
           path: dist
