@@ -1,7 +1,7 @@
 import mdx from '@mdx-js/esbuild';
-import minimist from 'minimist';
 import esbuild from 'esbuild';
 import * as fs from 'fs/promises';
+import minimist from 'minimist';
 import * as path from 'path';
 import * as ReactDOMServer from 'react-dom/server';
 import { jsx } from 'react/jsx-runtime';
@@ -88,7 +88,7 @@ for (let absPath of procPaths) {
     imported,
     title: imported.title,
     outPath: [...addrSegments, 'index'].join('/') + '.html',
-    outUrl: siteUrl + addrSegments.join('/') + '/',
+    outUrl: [siteUrl.slice(0, -1), ...addrSegments].join('/') + '/',
     segments: addrSegments,
     sourcePath: relPath
   };
@@ -105,10 +105,6 @@ for (let entry of entries) {
     lastAncestor = ancestor;
     return ancestor.entry;
   });
-
-  // let navigation = (entry.segments.length > 0)
-  //   ? Object.values(tree.children[entry.segments[0]].children).map(({ entry }) => ({ entry }))
-  //   : Object.values(tree.children).map(({ entry }) => ({ entry }));
 
   let navigation;
 
@@ -141,9 +137,4 @@ for (let entry of entries) {
 
   await fs.mkdir(outDirPath, { recursive: true });
   await fs.writeFile(outPath, fullText);
-
-  // console.log(ancestors)
 }
-
-// import * as util from 'util';
-// console.log(util.inspect(tree, { colors: true, depth: Infinity }));
