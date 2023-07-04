@@ -1,4 +1,4 @@
-import { Brand, LangBrand, PagePreviews } from './shared';
+import { Brand, PagePreviews } from './shared';
 
 export const title = 'Home';
 
@@ -7,25 +7,25 @@ export const title = 'Home';
 
 {Brand} is a software application which makes it possible to automate lab protocols.
 
-{Brand} is written in Python 3.11 for the backend and TypeScript 5.0 for the frontend.
+{Brand} is written in Python 3.11 for the backend and TypeScript for the frontend.
 
-![Automancer preview diagram](./assets/hero.png)
+<img src="./assets/hero.webp" alt="{Brand} preview diagram" width="1600" height="960" />
 
 
 ## Features
 
-- **Optional graphical user interface** – The application can be fully controlled from a graphical user interface. For more complex workflows, it is also possible to create a custom frontend by interfacing with {Brand}'s backend.
-- **Ease of use** – Protocols are defined in a YAML-like language called {LangBrand} which can be learned in less than an hour.
-- **Modular design** – Support for a new device in a setup can be added by installing a Python package. If no corresponding package is available, it is possible to create one and have it seamlessly integrate with the user interface with limited effort.
-- **Reliability and reproducibility** – {Brand} has support for error recovery, real-time notifications and log recording, which can be used to determine where an experiment went wrong.
-- **Remote connection** – Experiments can be controlled remotely, either through the graphical user interface or with a TCP socket. The connection is secured using TLS.
-- **Platform support** – Linux, macOS, Windows
+- **Modularity** – Apart from the core functionality and UI, most of {Brand}'s capabilities are provided through plugins. Plugins are Python modules that can extend {Brand} in one or more ways: they can add support for a new device, provide a custom protocol logic feature, report information to the UI… pretty much whatever you can dream up.
+- **User interface** – {Brand}'s user interface provides easy control to users with no coding expertise. Furthermore, by supporting plugin development, we make extending the user interface simple, in particular when employing the built-in UI components. For instance, this can be used to report data generated through Python, allowing Python developers without a background in UI development to customize their view of the application.
+- **Protocol format** – The declarative and human-readable (YAML-like) text format used by {Brand} has numerous benefits. Unlike proprietary formats, text files are lightweight, easy to share, to reuse and to compare between iterations. The language can be learned quickly by beginners and does not require any coding expertise. Experienced users can extend the language using plugins. {Brand} provides an optional built-in editor with advanced programmatic language features, such as live completion, errors and documentation on hover.
+- **Remote control** – Experiments can be started and controlled from another computer on the same or another network connected to the Internet. This allows multiple people in different locations to monitor the same experiments, or when running experiments on multiple setups, to control them all from the same computer.
+- **Written in Python and open source** – {Brand} is written in Python for the backend and TypeScript/SCSS with React for the user interface, running on Electron. It is available under the MIT license and open to contributions.
+
 
 
 ## Downloads
 
-- [macOS](https://scheduler-app-builds.s3.eu-central-1.amazonaws.com/macos/Automancer-darwin-x64-4.0.0.zip) – x86 only
-- [Windows 10/11](https://scheduler-app-builds.s3.eu-central-1.amazonaws.com/windows/Automancer-4.0.0+Setup.exe)
+- [macOS 11 and later](https://scheduler-app-builds.s3.eu-central-1.amazonaws.com/macos/Automancer-darwin-x64-5.0.0.zip) – Intel, Apple Silicon using Rosetta 2
+- [Windows 10 and 11](https://scheduler-app-builds.s3.eu-central-1.amazonaws.com/windows/Automancer-5.0.0+Setup.exe)
 
 
 ## Contents
