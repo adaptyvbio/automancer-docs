@@ -1,1 +1,41 @@
+import { Brand, LangBrand, PagePreviews } from '../shared';
+
 export const title = 'Usage';
+
+
+# {title}
+
+Articles in this category will teach you to use {Brand}.
+
+<PagePreviews pages={[
+  { title: `What is ${Brand}?`,
+    description: `Learn what ${Brand} is, what problems it solves, and how it works.`,
+    url: './what-is' },
+  { title: `Getting started`,
+    description: `Get started using ${Brand} in your project.`,
+    url: './getting-started-app' },
+  { title: 'Defining state using devices',
+    description: 'Learn the details on how to write robust protocols that interact with devices.',
+    url: './devices-state' },
+  { title: 'Understanding protocols',
+    description: 'Get started with writing protocols.',
+    url: './getting-started-protocols' },
+  { title: 'Defining quantities',
+    description: 'Work with quantities and units in your protocols.',
+    url: './units' },
+  { title: 'Managing protocol state',
+    description: 'Manipulate the state of protocol steps to obtain the desired behavior.',
+    url: './state' },
+  { title: 'Understanding protocol structure',
+    description: `Learn how the structure of protocols is generated from ${LangBrand}.`,
+    url: './structure' },
+  { title: 'Using expressions',
+    description: 'Add more capabilities to protocols using compile-time, runtime and dynamic expressions.',
+    url: './expressions' },
+  { title: 'Managing setups',
+    description: 'Configure and manage your setups.',
+    url: './hosts' },
+  { title: `Writing ${LangBrand}`,
+    description: `Learn how to write configuration and protocols using ${Brand}'s configuration file format, ${LangBrand}.`,
+    url: './config-lang' },
+]} />
